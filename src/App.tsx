@@ -33,12 +33,15 @@ export default function App(): JSX.Element {
   const [showAbout, setShowAbout] = createSignal(false);
   const [appVersion, setAppVersion] = createSignal('unknown');
   const [tauriVersion, setTauriVersion] = createSignal('unknown');
+  const [alwaysOnTop, setAlwaysOnTop] = createSignal(false);
 
   onMount(async () => {
     try {
       const [v, tv] = await Promise.all([getVersion(), getTauriVersion()]);
       setAppVersion(v);
       setTauriVersion(tv);
+      const current = await getCurrentWindow().isAlwaysOnTop();
+      setAlwaysOnTop(current);
     } catch (e) {
       console.error('Load version failed:', e);
     }
@@ -89,6 +92,16 @@ export default function App(): JSX.Element {
     }
   };
 
+  const toggleAlwaysOnTop = async () => {
+    try {
+      const next = !alwaysOnTop();
+      await getCurrentWindow().setAlwaysOnTop(next);
+      setAlwaysOnTop(next);
+    } catch (e) {
+      console.error('Toggle always-on-top failed:', e);
+    }
+  };
+
   return (
     <div class="h-screen w-screen flex flex-col bg-surface text-text select-none">
       {/* 自定义标题栏 */}
@@ -97,6 +110,17 @@ export default function App(): JSX.Element {
           <span class="text-xs text-text-dim">DevTool</span>
         </div>
         <div class="pr-2 flex gap-1">
+          <button
+            class="w-6 h-6 flex items-center justify-center rounded border border-border transition-colors"
+            classList={{
+              'bg-primary/20 text-primary border-primary/40 hover:bg-primary/30': alwaysOnTop(),
+              'bg-surface-alt text-text-dim hover:text-text hover:bg-surface': !alwaysOnTop(),
+            }}
+            onclick={toggleAlwaysOnTop}
+            title={alwaysOnTop() ? '取消置顶' : '窗口置顶'}
+          >
+            📌
+          </button>
           <button
             class="w-6 h-6 flex items-center justify-center rounded bg-surface-alt text-text-dim border border-border hover:text-text hover:bg-surface transition-colors"
             onclick={() => setShowAbout(true)}
