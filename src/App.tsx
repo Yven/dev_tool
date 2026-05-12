@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { getVersion, getTauriVersion } from '@tauri-apps/api/app';
+import { isEnabled, enable, disable } from '@tauri-apps/plugin-autostart';
 import TabBar from './components/TabBar';
 import TimestampPanel from './modules/timestamp/TimestampPanel';
 import EncodingPanel from './modules/encoding/EncodingPanel';
@@ -34,6 +35,7 @@ export default function App(): JSX.Element {
   const [appVersion, setAppVersion] = createSignal('unknown');
   const [tauriVersion, setTauriVersion] = createSignal('unknown');
   const [alwaysOnTop, setAlwaysOnTop] = createSignal(false);
+  const [autostart, setAutostart] = createSignal(false);
 
   onMount(async () => {
     try {
@@ -42,6 +44,7 @@ export default function App(): JSX.Element {
       setTauriVersion(tv);
       const current = await getCurrentWindow().isAlwaysOnTop();
       setAlwaysOnTop(current);
+      setAutostart(await isEnabled());
     } catch (e) {
       console.error('Load version failed:', e);
     }
@@ -61,11 +64,30 @@ export default function App(): JSX.Element {
       setPluginTabs((prev) => prev.filter((t) => t.id !== `plugin:${plugin.id}`));
     });
 
+    const unlistenShowAbout = await listen('show-about', () => {
+      setShowAbout(true);
+    });
+
     onCleanup(() => {
       unlistenLoaded();
       unlistenUnloaded();
+      unlistenShowAbout();
     });
   });
+
+  const toggleAutostart = async () => {
+    try {
+      const next = !autostart();
+      if (next) {
+        await enable();
+      } else {
+        await disable();
+      }
+      setAutostart(next);
+    } catch (e) {
+      console.error('Toggle autostart failed:', e);
+    }
+  };
 
   const hideWindow = async () => {
     try {
@@ -131,7 +153,7 @@ export default function App(): JSX.Element {
           <button
             class="w-6 h-6 flex items-center justify-center rounded bg-surface-alt text-text-dim border border-border hover:text-text hover:bg-surface transition-colors"
             onclick={hideWindow}
-            title="最小化"
+            title="隐藏"
           >
             ─
           </button>
@@ -182,6 +204,19 @@ export default function App(): JSX.Element {
               <div>开发者：Yven</div>
               <div>开发者联系方式：yvenchang@163.com</div>
               <div>全局触发键：Ctrl+Alt+D</div>
+              <div class="flex items-center justify-between mt-2 pt-2 border-t border-border">
+                <span>开机自启</span>
+                <button
+                  class="px-2 py-0.5 text-xs rounded border transition-colors"
+                  classList={{
+                    'bg-primary/20 text-primary border-primary/40': autostart(),
+                    'bg-surface text-text-dim border-border hover:border-primary': !autostart(),
+                  }}
+                  onclick={toggleAutostart}
+                >
+                  {autostart() ? '已开启' : '未开启'}
+                </button>
+              </div>
             </div>
             <div class="mt-4 flex justify-end">
               <button class="px-3 py-1 text-xs rounded border border-border hover:border-primary" onclick={() => setShowAbout(false)}>

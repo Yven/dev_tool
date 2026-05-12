@@ -29,6 +29,9 @@
     "fs:allow-read-dir",
     "window-state:default",
     "updater:default",
-    "positioner:allow-move-window"
+    "positioner:allow-move-window",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
   ]
 }

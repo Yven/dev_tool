@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, LocalResult, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Local, LocalResult, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -36,6 +36,10 @@ fn parse_input_to_utc(input: &str, unit: &str, timezone: &str) -> Result<DateTim
     }
 
     let naive = NaiveDateTime::parse_from_str(input, "%Y-%m-%d %H:%M:%S")
+        .or_else(|_| {
+            NaiveDate::parse_from_str(input, "%Y-%m-%d")
+                .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
+        })
         .map_err(|_| format!("无法解析输入: {input}"))?;
 
     if timezone.eq_ignore_ascii_case("local") {
@@ -93,17 +97,17 @@ fn format_in_timezone(dt: &DateTime<Utc>, timezone: &str) -> String {
     if timezone.eq_ignore_ascii_case("local") {
         return dt
             .with_timezone(&Local)
-            .format("%Y-%m-%d %H:%M:%S %:z")
+            .format("%Y-%m-%d %H:%M:%S")
             .to_string();
     }
     if let Ok(offset) = parse_offset(timezone) {
         return dt
             .with_timezone(&offset)
-            .format("%Y-%m-%d %H:%M:%S %:z")
+            .format("%Y-%m-%d %H:%M:%S")
             .to_string();
     }
     dt.with_timezone(&Utc)
-        .format("%Y-%m-%d %H:%M:%S %:z")
+        .format("%Y-%m-%d %H:%M:%S")
         .to_string()
 }
 
