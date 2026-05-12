@@ -1,0 +1,51 @@
+{
+  "name": "dev-tool",
+  "version": "0.1.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:perf": "node tests/perf/benchmark.mjs",
+    "lint": "eslint src/",
+    "check": "tsc --noEmit"
+  },
+  "license": "MIT",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
+    "@tauri-apps/plugin-fs": "^2.5.0",
+    "@tauri-apps/plugin-global-shortcut": "^2.3.1",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-positioner": "^2.3.1",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.10.1",
+    "@tauri-apps/plugin-window-state": "^2.4.1",
+    "solid-js": "^1.9.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@solidjs/testing-library": "^0.8.10",
+    "@tauri-apps/cli": "^2",
+    "@unocss/preset-icons": "^66.6.8",
+    "@unocss/preset-mini": "^66.6.8",
+    "jsdom": "^29.0.2",
+    "typescript": "~5.6.2",
+    "unocss": "^66.6.8",
+    "vite": "^6.0.3",
+    "vite-plugin-solid": "^2.11.0",
+    "vitest": "^4.1.5"
+  }
+}

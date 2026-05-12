@@ -1,0 +1,9 @@
+node_modules/
+dist/
+src-tauri/target/
+*.local
+.DS_Store
+.idea/
+.claude/
+*.swp
+*.swo

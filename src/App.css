@@ -1,0 +1,58 @@
+/* UnoCSS global reset + custom theme */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { color-scheme: dark; }
+html, body, #root {
+  height: 100%;
+  background: #1e1e1e;
+  color: #cccccc;
+}
+
+body { font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+
+button,
+input,
+textarea,
+select {
+  color: #cccccc;
+}
+
+/* 缩小滚动条 */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+*::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #6a6a6a;
+}
+
+select,
+option {
+  background-color: #2d2d2d;
+  color: #ffffff;
+}
+
+textarea::placeholder,
+input::placeholder {
+  color: #808080;
+}
+
+/* JSON 高亮 */
+.json-key {
+  color: #7dd3fc;
+}
+.json-string {
+  color: #86efac;
+}
+.json-number {
+  color: #fca5a5;
+}
+.json-literal {
+  color: #c4b5fd;
+}
