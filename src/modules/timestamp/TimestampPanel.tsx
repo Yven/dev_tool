@@ -100,7 +100,7 @@ export default function TimestampPanel(): JSX.Element {
       <InputArea
         value={input}
         onInput={setInput}
-        placeholder={input().trim() ? '输入时间戳或时间字符串（如：2026-05-11 19:55:22）' : `当前时间戳: ${currentTimestampByUnit()}`}
+        placeholder={input().trim() ? '输入时间戳或时间字符串（如：2026-05-11 19:55:22 或 2026-05-10）' : `当前时间戳: ${currentTimestampByUnit()}`}
       />
 
       <div class="flex gap-2 items-center">
