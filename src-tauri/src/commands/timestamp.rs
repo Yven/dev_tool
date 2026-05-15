@@ -5,20 +5,23 @@ use serde::Serialize;
 pub struct TimestampResult {
     seconds: i64,
     rfc3339: String,
-    local: String,
+    input_time: String,
+    output_time: String,
 }
 
-#[tauri::command]
-pub fn cmd_timestamp_convert(input: &str, unit: &str, timezone: &str) -> Result<TimestampResult, String> {
-    let dt_utc = parse_input_to_utc(input.trim(), unit, timezone)?;
+#[tauri::command(rename_all = "snake_case")]
+pub fn cmd_timestamp_convert(input: &str, unit: &str, input_timezone: &str, output_timezone: &str) -> Result<TimestampResult, String> {
+    let dt_utc = parse_input_to_utc(input.trim(), unit, input_timezone)?;
     let seconds = dt_utc.timestamp();
     let rfc3339 = dt_utc.to_rfc3339();
-    let local = format_in_timezone(&dt_utc, timezone);
+    let input_time = format_in_timezone(&dt_utc, input_timezone);
+    let output_time = format_in_timezone(&dt_utc, output_timezone);
 
     Ok(TimestampResult {
         seconds,
         rfc3339,
-        local,
+        input_time,
+        output_time,
     })
 }
 
@@ -117,18 +120,18 @@ mod tests {
 
     #[test]
     fn test_seconds_input() {
-        let r = cmd_timestamp_convert("1609459200", "s", "UTC").unwrap();
+        let r = cmd_timestamp_convert("1609459200", "s", "UTC", "UTC").unwrap();
         assert_eq!(r.seconds, 1609459200);
     }
 
     #[test]
     fn test_datetime_string() {
-        let r = cmd_timestamp_convert("2026-05-11 19:55:22", "s", "UTC+08:00").unwrap();
+        let r = cmd_timestamp_convert("2026-05-11 19:55:22", "s", "UTC+08:00", "UTC").unwrap();
         assert!(r.rfc3339.starts_with("2026-05-11T11:55:22"));
     }
 
     #[test]
     fn test_invalid_input() {
-        assert!(cmd_timestamp_convert("abc", "s", "UTC").is_err());
+        assert!(cmd_timestamp_convert("abc", "s", "UTC", "UTC").is_err());
     }
 }

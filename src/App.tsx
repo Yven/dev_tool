@@ -10,6 +10,7 @@ import EncodingPanel from './modules/encoding/EncodingPanel';
 import Base64Panel from './modules/base64/Base64Panel';
 import UrlPanel from './modules/url/UrlPanel';
 import JsonPanel from './modules/json/JsonPanel';
+import RandomPanel from './modules/random/RandomPanel';
 import PluginSlot from './plugin/PluginSlot';
 import Toast from './components/Toast';
 import './app.css';
@@ -20,6 +21,7 @@ const BUILTIN_TABS = [
   { id: 'base64', label: 'Base64', icon: 'i-carbon-character-whole-number' },
   { id: 'url', label: 'URL', icon: 'i-carbon-link' },
   { id: 'json', label: 'JSON', icon: 'i-carbon-json' },
+  { id: 'random', label: '随机数', icon: 'i-carbon-shuffle' },
 ];
 
 interface PluginTab {
@@ -68,10 +70,24 @@ export default function App(): JSX.Element {
       setShowAbout(true);
     });
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'Tab') {
+        e.preventDefault();
+        const tabs = [...BUILTIN_TABS, ...pluginTabs()];
+        const idx = tabs.findIndex((t) => t.id === activeTab());
+        const next = e.shiftKey
+          ? (idx - 1 + tabs.length) % tabs.length
+          : (idx + 1) % tabs.length;
+        setActiveTab(tabs[next].id);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
     onCleanup(() => {
       unlistenLoaded();
       unlistenUnloaded();
       unlistenShowAbout();
+      document.removeEventListener('keydown', handleKeyDown);
     });
   });
 
@@ -125,7 +141,7 @@ export default function App(): JSX.Element {
   };
 
   return (
-    <div class="h-screen w-screen flex flex-col bg-surface text-text select-none">
+    <div class="h-screen w-screen flex flex-col bg-surface text-text select-none" onContextMenu={(e) => e.preventDefault()}>
       {/* 自定义标题栏 */}
       <div class="h-8 flex items-center bg-surface-alt border-b border-border">
         <div class="h-full flex-1 flex items-center px-3 cursor-move" onMouseDown={startDragWindow}>
@@ -186,6 +202,9 @@ export default function App(): JSX.Element {
         </div>
         <div style={{ display: activeTab() === 'json' ? 'block' : 'none' }}>
           <JsonPanel />
+        </div>
+        <div style={{ display: activeTab() === 'random' ? 'block' : 'none' }}>
+          <RandomPanel />
         </div>
         <Show when={activeTab().startsWith('plugin:')}>
           <PluginSlot id={activeTab()} />

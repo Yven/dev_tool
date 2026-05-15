@@ -56,3 +56,16 @@ input::placeholder {
 .json-literal {
   color: #c4b5fd;
 }
+
+/* TabBar 隐藏滚动条 */
+.tab-bar::-webkit-scrollbar {
+  display: none;
+}
+.tab-bar {
+  scrollbar-width: none;
+}
+
+/* TabBar 外层容器内边距（原生 CSS，不依赖 UnoCSS） */
+.tab-bar-wrapper {
+  padding-inline: 0.75rem;
+}

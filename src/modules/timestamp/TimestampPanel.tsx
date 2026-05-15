@@ -6,7 +6,8 @@ import CopyButton from '../../components/CopyButton';
 interface TimestampResult {
   seconds: number;
   rfc3339: string;
-  local: string;
+  input_time: string;
+  output_time: string;
 }
 
 const TIMEZONES = [
@@ -47,25 +48,21 @@ const CACHE_KEY = 'cache:timestamp:input';
 export default function TimestampPanel(): JSX.Element {
   const [input, setInput] = createSignal('');
   const [nowMs, setNowMs] = createSignal(Date.now());
-  const [unit, setUnit] = createSignal<'s' | 'ms' | 'us'>('s');
-  const [tz, setTz] = createSignal<string>('local');
+  const [inputTz, setInputTz] = createSignal<string>('local');
+  const [outputTz, setOutputTz] = createSignal<string>('local');
   const [result, setResult] = createSignal<TimestampResult | null>(null);
   const [error, setError] = createSignal<string | null>(null);
 
-  const currentTimestampByUnit = createMemo(() => {
-    const ms = nowMs();
-    if (unit() === 'ms') return ms;
-    if (unit() === 'us') return ms * 1000;
-    return Math.floor(ms / 1000);
-  });
+  const currentTimestamp = createMemo(() => Math.floor(nowMs() / 1000));
 
   const convert = async () => {
-    const effectiveInput = input().trim() || String(currentTimestampByUnit());
+    const effectiveInput = input().trim() || String(currentTimestamp());
     try {
       const r = await invoke<TimestampResult>('cmd_timestamp_convert', {
         input: effectiveInput,
-        unit: unit(),
-        timezone: tz(),
+        unit: 's',
+        input_timezone: inputTz(),
+        output_timezone: outputTz(),
       });
       setResult(r);
       setError(null);
@@ -89,8 +86,8 @@ export default function TimestampPanel(): JSX.Element {
 
   createEffect(() => {
     const empty = input().trim() === '';
-    unit();
-    tz();
+    inputTz();
+    outputTz();
     if (empty) nowMs();
     convert();
   });
@@ -100,32 +97,42 @@ export default function TimestampPanel(): JSX.Element {
       <InputArea
         value={input}
         onInput={setInput}
-        placeholder={input().trim() ? '输入时间戳或时间字符串（如：2026-05-11 19:55:22 或 2026-05-10）' : `当前时间戳: ${currentTimestampByUnit()}`}
+        placeholder={input().trim() ? '输入时间戳或时间字符串（如：2026-05-11 19:55:22 或 2026-05-10）' : `当前时间戳: ${currentTimestamp()}`}
       />
 
-      <div class="flex gap-2 items-center">
-        <select
-          class="bg-surface-alt border border-border rounded px-2 py-1 text-xs text-white"
-          value={unit()}
-          onchange={(e) => setUnit(e.currentTarget.value as 's' | 'ms' | 'us')}
-        >
-          <option value="s">秒 (s)</option>
-          <option value="ms">毫秒 (ms)</option>
-          <option value="us">微秒 (us)</option>
-        </select>
-        <select
-          class="bg-surface-alt border border-border rounded px-2 py-1 text-xs text-white"
-          value={tz()}
-          onchange={(e) => setTz(e.currentTarget.value)}
-        >
-          <For each={TIMEZONES}>
-            {(zone) => (
-              <option value={zone.value}>
-                {zone.label}
-              </option>
-            )}
-          </For>
-        </select>
+      <div class="flex gap-2 items-center flex-wrap">
+        <div class="flex items-center gap-1">
+          <span class="text-xs text-text-dim">输入</span>
+          <select
+            class="bg-surface-alt border border-border rounded px-2 py-1 text-xs text-white"
+            value={inputTz()}
+            onchange={(e) => setInputTz(e.currentTarget.value)}
+          >
+            <For each={TIMEZONES}>
+              {(zone) => (
+                <option value={zone.value}>
+                  {zone.label}
+                </option>
+              )}
+            </For>
+          </select>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="text-xs text-text-dim">输出</span>
+          <select
+            class="bg-surface-alt border border-border rounded px-2 py-1 text-xs text-white"
+            value={outputTz()}
+            onchange={(e) => setOutputTz(e.currentTarget.value)}
+          >
+            <For each={TIMEZONES}>
+              {(zone) => (
+                <option value={zone.value}>
+                  {zone.label}
+                </option>
+              )}
+            </For>
+          </select>
+        </div>
       </div>
 
       {error() && (
@@ -147,9 +154,14 @@ export default function TimestampPanel(): JSX.Element {
             <CopyButton text={() => result()!.rfc3339} label="复制" />
           </div>
           <div class="p-2 bg-surface-alt rounded border border-border">
-            <div class="text-text-dim mb-1">时间</div>
-            <div class="font-mono mb-1">{result()!.local}</div>
-            <CopyButton text={() => result()!.local} label="复制" />
+            <div class="text-text-dim mb-1">输入时间</div>
+            <div class="font-mono mb-1">{result()!.input_time}</div>
+            <CopyButton text={() => result()!.input_time} label="复制" />
+          </div>
+          <div class="p-2 bg-surface-alt rounded border border-border">
+            <div class="text-text-dim mb-1">输出时间</div>
+            <div class="font-mono mb-1">{result()!.output_time}</div>
+            <CopyButton text={() => result()!.output_time} label="复制" />
           </div>
         </div>
       )}
