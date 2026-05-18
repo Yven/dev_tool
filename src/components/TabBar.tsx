@@ -1,4 +1,4 @@
-import { For, JSX, onCleanup, onMount } from 'solid-js';
+import { For, JSX, createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 
 export interface Tab {
   id: string;
@@ -14,19 +14,35 @@ interface Props {
 
 export default function TabBar(props: Props): JSX.Element {
   let barRef!: HTMLDivElement;
+  const [expanded, setExpanded] = createSignal(false);
+  const [hasOverflow, setHasOverflow] = createSignal(false);
+
+  const checkOverflow = () => {
+    if (!barRef) return;
+    setHasOverflow(barRef.scrollHeight > barRef.clientHeight + 1);
+  };
 
   onMount(() => {
-    const handler = (e: WheelEvent) => {
-      e.preventDefault();
-      barRef.scrollLeft += e.deltaY;
-    };
-    barRef.addEventListener('wheel', handler, { passive: false });
-    onCleanup(() => barRef.removeEventListener('wheel', handler));
+    const observer = new ResizeObserver(() => checkOverflow());
+    observer.observe(barRef);
+    onCleanup(() => observer.disconnect());
+  });
+
+  createEffect(() => {
+    props.tabs;
+    checkOverflow();
+    if (expanded() && !hasOverflow()) {
+      setExpanded(false);
+    }
   });
 
   return (
     <div class="tab-bar-wrapper py-1 bg-surface-alt border-b border-border">
-      <div ref={barRef} class="tab-bar flex gap-1 overflow-x-auto">
+      <div
+        ref={barRef}
+        class="tab-bar flex flex-wrap gap-1"
+        style={{ "max-height": expanded() ? "none" : "28px", overflow: "hidden" }}
+      >
         <For each={props.tabs}>
           {(tab) => (
             <button
@@ -43,6 +59,17 @@ export default function TabBar(props: Props): JSX.Element {
           )}
         </For>
       </div>
+      {hasOverflow() && (
+        <div class="flex justify-center mt-1">
+          <button
+            class="w-5 h-5 flex items-center justify-center rounded-full bg-surface text-text-dim hover:text-text hover:bg-primary/20 transition-colors"
+            onclick={() => setExpanded(!expanded())}
+            title={expanded() ? '收起' : '展开'}
+          >
+            <span class={expanded() ? 'i-carbon-chevron-up' : 'i-carbon-chevron-down'} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
