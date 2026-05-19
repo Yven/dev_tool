@@ -19,22 +19,31 @@ export default function TabBar(props: Props): JSX.Element {
 
   const checkOverflow = () => {
     if (!barRef) return;
-    setHasOverflow(barRef.scrollHeight > barRef.clientHeight + 1);
+    if (expanded()) return;
+    setHasOverflow(barRef.scrollHeight > 28 + 1);
   };
 
   onMount(() => {
-    const observer = new ResizeObserver(() => checkOverflow());
+    checkOverflow();
+    const observer = new ResizeObserver(() => {
+      if (!expanded()) checkOverflow();
+    });
     observer.observe(barRef);
     onCleanup(() => observer.disconnect());
   });
 
   createEffect(() => {
     props.tabs;
-    checkOverflow();
-    if (expanded() && !hasOverflow()) {
-      setExpanded(false);
-    }
+    if (!expanded()) checkOverflow();
   });
+
+  const toggleExpand = () => {
+    const next = !expanded();
+    setExpanded(next);
+    if (!next) {
+      requestAnimationFrame(() => checkOverflow());
+    }
+  };
 
   return (
     <div class="tab-bar-wrapper py-1 bg-surface-alt border-b border-border">
@@ -60,13 +69,19 @@ export default function TabBar(props: Props): JSX.Element {
         </For>
       </div>
       {hasOverflow() && (
-        <div class="flex justify-center mt-1">
+        <div class="flex justify-center">
           <button
-            class="w-5 h-5 flex items-center justify-center rounded-full bg-surface text-text-dim hover:text-text hover:bg-primary/20 transition-colors"
-            onclick={() => setExpanded(!expanded())}
+            class="w-8 h-[5px] flex items-center justify-center rounded transition-colors cursor-pointer"
+            classList={{
+              'bg-primary/40 text-white': !expanded(),
+              'text-white/70 hover:text-white hover:bg-primary/20': expanded(),
+            }}
+            onclick={toggleExpand}
             title={expanded() ? '收起' : '展开'}
           >
-            <span class={expanded() ? 'i-carbon-chevron-up' : 'i-carbon-chevron-down'} />
+            <svg width="6" height="4" viewBox="0 0 6 4" fill="currentColor">
+              <polygon points={expanded() ? "0,4 3,0 6,4" : "0,0 3,4 6,0"} />
+            </svg>
           </button>
         </div>
       )}
