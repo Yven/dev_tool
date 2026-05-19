@@ -69,7 +69,7 @@ export default function TabBar(props: Props): JSX.Element {
         </For>
       </div>
       {hasOverflow() && (
-        <div class="flex justify-center">
+        <div class="flex justify-center mt-[5px]">
           <button
             class="w-8 h-[5px] flex items-center justify-center rounded transition-colors cursor-pointer"
             classList={{
