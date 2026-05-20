@@ -107,8 +107,14 @@ export default function RandomPanel(): JSX.Element {
         </button>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
         <span class="text-xs text-text-dim">长度</span>
+        <button
+          class="w-6 h-6 flex items-center justify-center rounded bg-surface-alt border border-border hover:border-primary text-xs transition-colors"
+          onclick={() => setLength(prev => Math.max(4, prev - 1))}
+        >
+          −
+        </button>
         <input
           type="range"
           min={4}
@@ -117,6 +123,12 @@ export default function RandomPanel(): JSX.Element {
           onInput={(e) => setLength(Number(e.currentTarget.value))}
           class="flex-1 accent-primary"
         />
+        <button
+          class="w-6 h-6 flex items-center justify-center rounded bg-surface-alt border border-border hover:border-primary text-xs transition-colors"
+          onclick={() => setLength(prev => Math.min(128, prev + 1))}
+        >
+          +
+        </button>
         <span class="text-xs font-mono text-text min-w-[2rem] text-right">{length()}</span>
       </div>
 

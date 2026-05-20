@@ -75,20 +75,12 @@ export default function ReplacePanel(): JSX.Element {
         />
       </div>
 
-      <div class="flex gap-2">
-        <button
-          class="px-3 py-1.5 text-xs text-white rounded bg-primary hover:bg-primary/80 transition-colors"
-          onclick={() => doReplace(false)}
-        >
-          替换
-        </button>
-        <button
-          class="px-3 py-1.5 text-xs text-white rounded bg-primary hover:bg-primary/80 transition-colors"
-          onclick={() => doReplace(true)}
-        >
-          全部替换
-        </button>
-      </div>
+      <button
+        class="px-3 py-1.5 text-xs text-white rounded bg-primary hover:bg-primary/80 transition-colors"
+        onclick={() => doReplace(true)}
+      >
+        全部替换
+      </button>
 
       {error() && (
         <div class="p-2 text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded">

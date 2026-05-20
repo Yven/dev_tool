@@ -79,3 +79,7 @@ export default {
 ```
 
 Single file, ESModule, ≤ 200KB, hot-pluggable via plugins/ directory.
+
+## User Preferences
+
+- **不要自动提交 git**：除非用户明确要求提交，否则不要执行 `git add` / `git commit`。
