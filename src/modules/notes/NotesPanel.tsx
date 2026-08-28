@@ -1,4 +1,4 @@
-import { JSX, createSignal, createEffect, onMount, For } from 'solid-js';
+import { JSX, createSignal, createEffect, onMount, For, untrack } from 'solid-js';
 import NoteBox from './NoteBox';
 import {
   Box,
@@ -46,7 +46,7 @@ export default function NotesPanel(props: Props): JSX.Element {
 
   // 切换到本面板时聚焦最顶框（focusTick 自增保证每次激活都触发）
   createEffect(() => {
-    if (props.active) requestFocus(boxes()[0]?.id ?? null);
+    if (props.active) requestFocus(untrack(() => boxes()[0]?.id ?? null));
   });
 
   const onChange = (id: string, content: string) => {
@@ -71,7 +71,7 @@ export default function NotesPanel(props: Props): JSX.Element {
     const next = deleteEmpty(prev, id);
     if (next === prev) return;
     setBoxes(next);
-    requestFocus(next[idx]?.id ?? next[idx - 1]?.id ?? null);
+    requestFocus(next[idx - 1]?.id ?? next[idx]?.id ?? null);
   };
 
   return (
