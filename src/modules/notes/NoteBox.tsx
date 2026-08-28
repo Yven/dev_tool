@@ -37,7 +37,9 @@ export default function NoteBox(props: Props): JSX.Element {
 
   createEffect(() => {
     const ed = editor();
-    if (props.focus?.() && ed) ed.focus();
+    if (props.focus?.() && ed) {
+      requestAnimationFrame(() => ed.focus());
+    }
   });
 
   onCleanup(() => {

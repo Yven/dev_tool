@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addOnTop, splitAtCursor, deleteEmpty, updateContent, isTopFirstLine } from './boxes';
+import { addOnTop, splitAtCursor, deleteEmpty, isTopFirstLine } from './boxes';
 
 const b = (id: string, content: string) => ({ id, content });
 
@@ -39,9 +39,6 @@ describe('boxes reducer', () => {
     expect(deleteEmpty(boxes, '1')).toBe(boxes);
   });
 
-  it('updateContent 按 id 更新', () => {
-    expect(updateContent([b('1', 'a')], '1', 'b')[0].content).toBe('b');
-  });
 
   it('isTopFirstLine 仅在顶框且第一行时为真', () => {
     const boxes = [b('1', 'a'), b('2', 'b')];

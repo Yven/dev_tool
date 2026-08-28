@@ -36,10 +36,6 @@ export function deleteEmpty(boxes: Box[], id: string): Box[] {
   return boxes.filter((x) => x.id !== id);
 }
 
-export function updateContent(boxes: Box[], id: string, content: string): Box[] {
-  return boxes.map((x) => (x.id === id ? { ...x, content } : x));
-}
-
 export function isTopFirstLine(
   boxes: Box[],
   id: string,
