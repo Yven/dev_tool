@@ -12,6 +12,7 @@ interface Props {
 
 export default function NoteBox(props: Props): JSX.Element {
   let root!: HTMLDivElement;
+  let disposed = false;
   const [editor, setEditor] = createSignal<NoteEditor | null>(null);
   const [failed, setFailed] = createSignal(false);
 
@@ -22,12 +23,16 @@ export default function NoteBox(props: Props): JSX.Element {
         initial: props.box.content,
         onMarkdownChange: (md) => props.onChange(props.box.id, md),
       });
+      if (disposed) {
+        void ed.destroy();
+        return;
+      }
       setEditor(ed);
+      root.addEventListener('keydown', handleKeyDown, true);
     } catch (e) {
       console.error('NoteBox editor init failed:', e);
       setFailed(true);
     }
-    root.addEventListener('keydown', handleKeyDown, true);
   });
 
   createEffect(() => {
@@ -36,7 +41,8 @@ export default function NoteBox(props: Props): JSX.Element {
   });
 
   onCleanup(() => {
-    root.removeEventListener('keydown', handleKeyDown, true);
+    disposed = true;
+    if (root) root.removeEventListener('keydown', handleKeyDown, true);
     editor()?.destroy();
   });
 
