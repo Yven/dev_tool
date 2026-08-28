@@ -61,3 +61,31 @@ input::placeholder {
 .tab-bar-wrapper {
   padding-inline: 0.75rem;
 }
+
+/* 笔记面板：heynote 风格块外观 */
+.notes-box {
+  border: 1px solid #3c3c3c;
+  border-radius: 8px;
+  background: #2d2d2d;
+  padding: 6px 10px;
+  min-height: 44px;
+}
+.notes-box .milkdown {
+  min-height: 32px;
+  outline: none;
+}
+.notes-box-fallback {
+  color: #808080;
+}
+.milkdown-code-block-lang {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1;
+  color: #808080;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-right: 8px;
+  user-select: none;
+}
+
