@@ -12,6 +12,7 @@ import UrlPanel from './modules/url/UrlPanel';
 import JsonPanel from './modules/json/JsonPanel';
 import RandomPanel from './modules/random/RandomPanel';
 import ReplacePanel from './modules/replace/ReplacePanel';
+import NotesPanel from './modules/notes/NotesPanel';
 import PluginSlot from './plugin/PluginSlot';
 import Toast from './components/Toast';
 import './app.css';
@@ -24,6 +25,7 @@ const BUILTIN_TABS = [
   { id: 'json', label: 'JSON', icon: 'i-carbon-json' },
   { id: 'random', label: '随机数', icon: 'i-carbon-shuffle' },
   { id: 'replace', label: '替换', icon: 'i-carbon-find-replace' },
+  { id: 'notes', label: '笔记', icon: 'i-carbon-document' },
 ];
 
 interface PluginTab {
@@ -210,6 +212,9 @@ export default function App(): JSX.Element {
         </div>
         <div style={{ display: activeTab() === 'replace' ? 'block' : 'none' }}>
           <ReplacePanel />
+        </div>
+        <div style={{ display: activeTab() === 'notes' ? 'block' : 'none' }}>
+          <NotesPanel active={activeTab() === 'notes'} />
         </div>
         <Show when={activeTab().startsWith('plugin:')}>
           <PluginSlot id={activeTab()} />
