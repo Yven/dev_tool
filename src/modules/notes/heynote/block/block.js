@@ -2,7 +2,6 @@ import { ViewPlugin, EditorView, Decoration, WidgetType, lineNumbers } from "@co
 import { layer, RectangleMarker } from "@codemirror/view"
 import { EditorState, RangeSetBuilder, StateField, RangeSet, Transaction} from "@codemirror/state";
 import { syntaxTreeAvailable } from "@codemirror/language"
-import { useHeynoteStore } from "../../stores/heynote-store.js"
 import { heynoteEvent, LANGUAGE_CHANGE, CURSOR_CHANGE, SET_CONTENT, UPDATE_CREATED, ADD_NEW_BLOCK } from "../annotation.js";
 import { mathBlock } from "./math.js"
 import { emptyBlockSelected } from "./select-all.js";
@@ -320,7 +319,6 @@ export function triggerCursorChange({state, dispatch}) {
 }
 
 const emitCursorChange = (editor) => {
-    const heynoteStore = useHeynoteStore()
     return ViewPlugin.fromClass(
         class {
             update(update) {
@@ -335,13 +333,16 @@ const emitCursorChange = (editor) => {
                     ).reduce((a, b) => a + b, 0)
 
                     const block = getActiveNoteBlock(update.state)
-                    if (block && cursorLine) {
-                        heynoteStore.currentCursorLine = cursorLine
-                        heynoteStore.currentSelectionSize = selectionSize
-                        heynoteStore.currentLanguage = block.language.name
-                        heynoteStore.currentLanguageAuto = block.language.auto
-                        heynoteStore.currentBufferName = editor.name
-                        heynoteStore.currentCreatedTime = block.created ? new Date(Date.parse(block.created)) : null
+                    if (block && cursorLine) { // [DEVTool] 状态栏回调
+                        const cb = window.__heynoteOnCursorChange
+                        if (cb) cb({
+                            line: cursorLine,
+                            selectionSize,
+                            language: block.language.name,
+                            auto: block.language.auto,
+                            name: editor.name,
+                            created: block.created ? new Date(Date.parse(block.created)) : null,
+                        })
                     }
                 }
             }

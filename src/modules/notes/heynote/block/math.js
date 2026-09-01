@@ -7,6 +7,8 @@ import { foldState } from "@codemirror/language"
 import { getNoteBlockFromPos } from "./block"
 import { transactionsHasAnnotation, CURRENCIES_LOADED } from "../annotation"
 import { isBlockFolded } from "../fold-gutter"
+import { create, all } from "mathjs" // [DEVTool]
+const math = create(all)
 
 
 class MathResult extends WidgetType {
@@ -69,7 +71,7 @@ function mathDeco(view) {
                         pos = block.content.from
                         continue
                     }
-                    parser = window.math.parser()
+                    parser = math.parser()
                     mathParsers.set(block, {parser, prev})
                 }
                 

@@ -7,7 +7,6 @@ import { history, defaultKeymap, historyKeymap } from '@codemirror/commands';
 import { closeBrackets, autocompletion, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
 import { lintKeymap } from '@codemirror/lint';
 
-import { crosshairCursor as customCrosshairCursor} from "./crosshair-cursor.js"
 
 // (The superfluous function calls around the list of extensions work
 // around current limitations in tree-shaking software.)
@@ -63,9 +62,7 @@ const customSetup = /*@__PURE__*/(() => [
     rectangularSelection({
         eventFilter: e => e.altKey && e.shiftKey
     }),
-    customCrosshairCursor({
-        eventFilter: e => e.altKey && e.shiftKey
-    }),
+    crosshairCursor(),
     //crosshairCursor(),
     
     indentOnInput(),

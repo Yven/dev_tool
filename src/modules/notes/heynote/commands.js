@@ -41,9 +41,6 @@ import { cutCommand, copyCommand, pasteCommand } from "./clipboard/copy-paste.js
 import { markModeMoveCommand, toggleSelectionMarkMode, selectionMarkModeCancel } from "./mark-mode.js"
 import { insertDateAndTime } from "./date-time.js"
 import { foldBlock, unfoldBlock, toggleBlockFold } from "./fold-gutter.js"
-import { useHeynoteStore } from "../stores/heynote-store.js";
-import { useSettingsStore } from "../stores/settings-store.js"
-import { toggleSpellcheck, enableSpellcheck, disableSpellcheck } from "./spell-check.js"
 import { insertIndentation } from "./indentation.js"
 import { toggleCheckbox } from "./todo-checkbox.ts"
 
@@ -53,77 +50,6 @@ const cursorNextBlock = markModeMoveCommand(gotoNextBlock, selectNextBlock)
 const cursorPreviousParagraph = markModeMoveCommand(gotoPreviousParagraph, selectPreviousParagraph)
 const cursorNextParagraph = markModeMoveCommand(gotoNextParagraph, selectNextParagraph)
 
-
-const openLanguageSelector = (editor) => () => {
-    useHeynoteStore().openLanguageSelector()
-    return true
-}
-const openBufferSelector = (editor) => () => {
-    useHeynoteStore().openBufferSelector()
-    return true
-}
-const openCommandPalette = (editor) => () => {
-    useHeynoteStore().openCommandPalette()
-    return true
-}
-const openMoveToBuffer = (editor) => () => {
-    useHeynoteStore().openMoveToBufferSelector()
-    return true
-}
-const openCreateNewBuffer = (editor) => () => {
-    useHeynoteStore().openCreateBuffer("new")
-    return true
-}
-
-const closeCurrentTab = (editor) => () => {
-    useHeynoteStore().closeCurrentTab()
-    return true
-}
-const reopenLastClosedTab = (editor) => () => {
-    useHeynoteStore().reopenLastClosedTab()
-    return true
-}
-const switchToLastTab = (editor) => () => {
-    useHeynoteStore().switchToLastTab()
-    return true
-}
-const nextTab = (editor) => () => {
-    useHeynoteStore().nextTab()
-    return true
-}
-const previousTab = (editor) => () => {
-    useHeynoteStore().previousTab()
-    return true
-}
-
-export function toggleAlwaysOnTop(editor) {
-    return (view) => {
-        const settingsStore = useSettingsStore()
-        settingsStore.updateSettings({alwaysOnTop:!settingsStore.settings.alwaysOnTop})
-        return true
-    }
-}
-
-export function toggleLeftPanel(editor) {
-    return (view) => {
-        useHeynoteStore().toggleLeftPanel()
-        return true
-    }
-}
-
-export function openBufferExplorer(editor) {
-    return (view) => {
-        useHeynoteStore().openBufferExplorer()
-        return true
-    }
-}
-
-export function openLibrarySearch(editor) {
-    return (view) => {
-        useHeynoteStore().openLibrarySearch()
-        return true
-    }
-}
 
 const nothing = (view) => {
     return true
@@ -163,40 +89,11 @@ const HEYNOTE_COMMANDS = {
     cursorNextParagraph: cmd(cursorNextParagraph, "Cursor", "Move cursor to next paragraph"),
     toggleSelectionMarkMode: cmd(toggleSelectionMarkMode, "Cursor", "Toggle selection mark mode"),
     selectionMarkModeCancel: cmd(selectionMarkModeCancel, "Cursor", "Cancel selection mark mode"),
-    openLanguageSelector: cmd(openLanguageSelector, "Block", "Select block language…"),
-    openBufferSelector: cmd(openBufferSelector, "Buffer", "Switch buffer…", global),
-    openCommandPalette: cmd(openCommandPalette, "Editor", "Open command palette…", global),
-    openMoveToBuffer: cmd(openMoveToBuffer, "Block", "Move block to another buffer…"),
-    openCreateNewBuffer: cmd(openCreateNewBuffer, "Buffer", "Create new buffer…", global),
     cut: cmd(cutCommand, "Clipboard", "Cut selection"),
     copy: cmd(copyCommand, "Clipboard", "Copy selection"),
     foldBlock: cmd(foldBlock, "Block", "Fold block"),
     unfoldBlock: cmd(unfoldBlock, "Block", "Unfold block"),
     toggleBlockFold: cmd(toggleBlockFold, "Block", "Toggle block fold"),
-    toggleLeftPanel: cmd(toggleLeftPanel, "Editor", "Toggle left sidebar panel", global),
-    openBufferExplorer: cmd(openBufferExplorer, "Buffer", "Open buffer explorer", global),
-    openLibrarySearch: cmd(openLibrarySearch, "Search", "Open library search", global),
-
-    // tab commands
-    closeCurrentTab: cmd(closeCurrentTab, "Buffer", "Close current tab", global),
-    reopenLastClosedTab: cmd(reopenLastClosedTab, "Buffer", "Reopen last closed tab", global),
-    switchToLastTab: cmd(switchToLastTab, "Buffer", "Switch to last tab", global),
-    previousTab: cmd(previousTab, "Buffer", "Switch to previous tab", global),
-    nextTab: cmd(nextTab, "Buffer", "Switch to next tab", global),
-    ...Object.fromEntries(Array.from({ length: 9 }, (_, i) => [
-        "switchToTab" + (i+1), 
-        cmdLessContext(() => {
-            useHeynoteStore().switchToTabIndex(i)
-            return true
-        }, "Buffer", `Switch to tab ${i+1}`, global),
-    ])),
-
-    // spellcheck
-    toggleSpellcheck: cmd(toggleSpellcheck, "Spellchecker", "Toggle Spellchecking"),
-    enableSpellcheck: cmd(enableSpellcheck, "Spellchecker", "Enable Spellchecking"),
-    disableSpellcheck: cmd(disableSpellcheck, "Spellchecker", "Disable Spellchecking"),
-    toggleAlwaysOnTop: cmd(toggleAlwaysOnTop, "Window", "Toggle Always on top", global),
-
     // commands without editor context
     paste: cmdLessContext(pasteCommand, "Clipboard", "Paste from clipboard"),
     selectAll: cmdLessContext(selectAll, "Selection", "Select all"),

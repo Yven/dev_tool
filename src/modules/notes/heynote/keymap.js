@@ -15,9 +15,9 @@ const cmdShift = (key, command, shiftCommand) => {
     ]
 }
 
-const isMac = window.heynote.platform.isMac
-const isLinux = window.heynote.platform.isLinux
-const isWindows = window.heynote.platform.isWindows
+const isMac = window.heynote?.platform?.isMac ?? false // [DEVTool]
+const isLinux = window.heynote?.platform?.isLinux ?? false
+const isWindows = window.heynote?.platform?.isWindows ?? true
 
 export const DEFAULT_KEYMAP = [
     cmd("Enter", "insertNewlineAndIndent"),
@@ -99,12 +99,6 @@ export const DEFAULT_KEYMAP = [
     //cmd("Alt-ArrowLeft", "cursorSubwordBackward"),
     //cmd("Alt-ArrowRight", "cursorSubwordForward"),
 
-    cmd("Mod-l", "openLanguageSelector"),
-    cmd("Mod-p", "openBufferSelector"),
-    cmd("Mod-Shift-p", "openCommandPalette"),
-    cmd("Mod-s", "openMoveToBuffer"),
-    cmd("Mod-n", "openCreateNewBuffer"),
-
     cmd("Alt-Shift-f", "formatBlockContent"),
     cmd("Mod-Shift-Space", "toggleCheckbox"),
 
@@ -121,27 +115,6 @@ export const DEFAULT_KEYMAP = [
         cmd("Alt-Ctrl-]", "unfoldBlock"),
         cmd("Alt-Ctrl-.", "toggleBlockFold")
     ]),
-
-    // tabs
-    cmd("Mod-w", "closeCurrentTab"),
-    cmd("Mod-Shift-t", "reopenLastClosedTab"),
-    cmd("Ctrl-Tab", "nextTab"),
-    cmd("Ctrl-Shift-Tab", "previousTab"),
-    cmd("Mod-1", "switchToTab1"),
-    cmd("Mod-2", "switchToTab2"),
-    cmd("Mod-3", "switchToTab3"),
-    cmd("Mod-4", "switchToTab4"),
-    cmd("Mod-5", "switchToTab5"),
-    cmd("Mod-6", "switchToTab6"),
-    cmd("Mod-7", "switchToTab7"),
-    cmd("Mod-8", "switchToTab8"),
-    cmd("Mod-9", "switchToTab9"),
-    cmd("Mod-0", "switchToLastTab"),
-
-    // sidebar
-    cmd("Mod-Shift-s", "toggleLeftPanel"),
-    cmd("Mod-Shift-e", "openBufferExplorer"),
-    cmd("Mod-Shift-f", "openLibrarySearch"),
 
     // search
     //cmd("Mod-f", "openSearchPanel"),

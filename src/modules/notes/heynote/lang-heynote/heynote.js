@@ -7,7 +7,7 @@ import {styleTags, tags as t} from "@lezer/highlight"
 import { json } from "@codemirror/lang-json"
 import { javascript } from "@codemirror/lang-javascript"
 
-import { FOLD_LABEL_LENGTH } from "@/src/common/constants.js"
+import { FOLD_LABEL_LENGTH } from "../common/constants.js"
 
 
 function foldNode(node) {

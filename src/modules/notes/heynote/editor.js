@@ -21,19 +21,12 @@ import { heynoteCopyCut } from "./clipboard/copy-paste.js"
 import { heynoteDropPaste } from "./clipboard/drag-drop.js"
 import { languageDetection } from "./language-detection/autodetect.js"
 import { autoSaveContent } from "./save.js"
-import { imageExtension } from "./image/image.js"
 import { todoCheckboxPlugin} from "./todo-checkbox.ts"
-import { links } from "./links.js"
-import { colorPreviewExtension } from "./color-preview.js"
 import { indentation } from "./indentation.js"
 import { HEYNOTE_COMMANDS } from "./commands.js";
-import { NoteFormat } from "../common/note-format.js"
-import { AUTO_SAVE_INTERVAL } from "../common/constants.js"
-import { useHeynoteStore } from "../stores/heynote-store.js";
-import { useErrorStore } from "../stores/error-store.js";
+import { NoteFormat } from "./common/note-format.js"
+import { AUTO_SAVE_INTERVAL } from "./common/constants.js"
 import { foldGutterExtension } from "./fold-gutter.js"
-import { heynoteSearch } from "./search/search.js"
-import { spellcheckConfig } from "./spell-check.js"
 import { scrollMargin, getScrollMargins } from "./scroll-margin.js"
 
 
@@ -87,8 +80,6 @@ export class HeynoteEditor {
         this.spellcheckCompartment = new Compartment
         this.setDefaultBlockLanguage(defaultBlockToken, defaultBlockAutoDetect)
         this.contentLoaded = false
-        this.notesStore = useHeynoteStore()
-        this.errorStore = useErrorStore()
         this.name = ""
         this.selectionMarkMode = false
         
@@ -113,7 +104,6 @@ export class HeynoteEditor {
                 this.fontTheme.of(getFontTheme(fontFamily, fontSize)),
                 this.indentUnitCompartment.of(indentation(indentType, tabSize)),
                 scrollMargin(),
-                heynoteSearch,
                 heynoteLang(),
                 noteBlockExtension(this),
                 languageDetection(path, () => this),
@@ -127,7 +117,6 @@ export class HeynoteEditor {
 
                 autoSaveContent(this, AUTO_SAVE_INTERVAL),
 
-                imageExtension(),
 
                 // Markdown extensions, we need to add markdownKeymap manually with the highest precedence
                 // so that it takes precedence over the default keymap
@@ -136,10 +125,7 @@ export class HeynoteEditor {
                 //markdown({addKeymap: false}),
                 Prec.highest(cmKeymap.of(markdownKeymap)),
 
-                links,
-                this.colorPreviewCompartment.of(colorPreviewEnabled ? colorPreviewExtension : []),
 
-                this.spellcheckCompartment.of(spellcheckConfig(this.spellcheckEnabled)),
                 this.highlightWhitespaceCompartment.of(showWhitespace ? highlightWhitespace() : [])
             ],
         })
@@ -225,7 +211,7 @@ export class HeynoteEditor {
             this.setReadOnly(false)
         } catch (e) {
             this.setReadOnly(true)
-            this.errorStore.addError(`Failed to load note: ${e.message}`)
+            console.error(`Failed to load note: ${e.message}`) // [DEVTool]
             throw new Error(`Failed to load note: ${e.message}`)
         }
         this.name = this.note.metadata?.name || this.path
@@ -267,6 +253,16 @@ export class HeynoteEditor {
                 resolve()
             })
         })
+    }
+
+    async setBuffer(path, name) { // [DEVTool]
+        await this.save()
+        if (this.onChange) {
+            window.heynote.buffer.removeOnChangeCallback(this.path, this.onChange)
+        }
+        this.path = path
+        this.name = name
+        await this.loadContent()
     }
 
     setName(name) {
@@ -345,22 +341,9 @@ export class HeynoteEditor {
         })
     }
 
-    setSpellcheckEnabled(enabled) {
-        this.spellcheckEnabled = enabled
-        this.view.dispatch({
-            effects: this.spellcheckCompartment.reconfigure(spellcheckConfig(this.spellcheckEnabled)),
-        })
-    }
-
     setShowWhitespace(enabled) {
         this.view.dispatch({
             effects: this.highlightWhitespaceCompartment.reconfigure(enabled ? highlightWhitespace() : []),
-        })
-    }
-
-    setColorPreviewEnabled(enabled) {
-        this.view.dispatch({
-            effects: this.colorPreviewCompartment.reconfigure(enabled ? colorPreviewExtension : []),
         })
     }
 
@@ -369,39 +352,6 @@ export class HeynoteEditor {
         this.view.dispatch({
             effects: this.cursorBlinkCompartment.reconfigure(drawSelection({cursorBlinkRate: rate})),
         })
-    }
-
-    async createNewBuffer(path, name) {
-        const data = getBlockDelimiter(this.defaultBlockToken, this.defaultBlockAutoDetect)
-        await this.notesStore.saveNewBuffer(path, name, data)
-
-        // by using requestAnimationFrame we avoid a race condition where rendering the block backgrounds
-        // would fail if we immediately opened the new note (since the block UI wouldn't have time to update 
-        // after the block was deleted)
-        requestAnimationFrame(() => {
-            this.notesStore.openBuffer(path)
-        })
-    }
-
-    async createNewBufferFromActiveBlock(path, name) {
-        const block = getActiveNoteBlock(this.view.state)
-        if (!block) {
-            return
-        }
-        const data = this.view.state.sliceDoc(block.range.from, block.range.to)
-        await this.notesStore.saveNewBuffer(path, name, data)
-        deleteBlock(this)(this.view)
-
-        // by using requestAnimationFrame we avoid a race condition where rendering the block backgrounds
-        // would fail if we immediately opened the new note (since the block UI wouldn't have time to update 
-        // after the block was deleted)
-        //requestAnimationFrame(() => {
-        //    this.notesStore.openBuffer(path)
-        //})
-
-        // add new buffer to recent list so that it shows up at the top of the buffer selector
-        this.notesStore.addRecentBuffer(path)
-        this.notesStore.addRecentBuffer(this.notesStore.currentBufferPath)
     }
 
     getActiveBlockContent() {
