@@ -1,6 +1,6 @@
 [package]
 name = "dev-tool"
-version = "0.2.0"
+version = "0.2.1"
 description = "Windows desktop lightweight dev utility tool"
 authors = ["you"]
 edition = "2021"
