@@ -89,3 +89,12 @@ input::placeholder {
   user-select: none;
 }
 
+/* 笔记面板（heynote 分块编辑器的外层容器） */
+.notes-editor .cm-editor {
+  height: 100%;
+  font-size: 13px;
+}
+.notes-editor .cm-content {
+  padding-bottom: 24px;
+}
+
