@@ -41,6 +41,11 @@ pub fn run() {
             commands::config::plugin_storage_set,
             commands::random::cmd_random_generate,
             commands::replace::cmd_text_replace,
+            commands::notes::notes_read_index,
+            commands::notes::notes_write_index,
+            commands::notes::notes_read,
+            commands::notes::notes_write,
+            commands::notes::notes_delete,
         ])
         .setup(|app| {
             // 注册全局热键（Ctrl+Alt+D 显示/最小化切换）
