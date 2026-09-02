@@ -58,6 +58,20 @@ input::placeholder {
   color: #c4b5fd;
 }
 
+/* JSON 输出行号 */
+.json-out {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  line-height: 1.5;
+}
+.json-line-num {
+  color: #6a6a6a;
+  user-select: none;
+  text-align: right;
+  padding-right: 10px;
+  min-width: 2.5ch;
+  flex-shrink: 0;
+}
+
 /* TabBar 外层容器内边距（原生 CSS，不依赖 UnoCSS） */
 .tab-bar-wrapper {
   padding-inline: 0.75rem;

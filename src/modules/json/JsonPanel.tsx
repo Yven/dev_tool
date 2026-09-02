@@ -1,12 +1,14 @@
-import { createEffect, createMemo, createSignal, JSX, onMount, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, For, JSX, onMount, Show } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import InputArea from '../../components/InputArea';
 import CopyButton from '../../components/CopyButton';
+import { highlightJsonLines } from './highlight';
 
 interface JsonResult {
   output: string;
   error_line: number | null;
   error_msg: string | null;
+  converted_from: string | null;
 }
 
 export default function JsonPanel(): JSX.Element {
@@ -39,37 +41,11 @@ export default function JsonPanel(): JSX.Element {
       });
       setResult(r);
     } catch (e) {
-      setResult({ output: '', error_line: null, error_msg: String(e) });
+      setResult({ output: '', error_line: null, error_msg: String(e), converted_from: null });
     }
   };
 
-  const highlightedHtml = createMemo(() => {
-    const text = result()?.output ?? '';
-    if (!text) return '';
-
-    const escaped = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-
-    // Basic JSON syntax highlighting for formatted or minified JSON output
-    return escaped.replace(
-      /("(?:\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"\s*:?)|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
-      (match, strToken, boolOrNullToken, numberToken) => {
-        if (strToken) {
-          const isKey = /:$/.test(strToken);
-          return `<span class="${isKey ? 'json-key' : 'json-string'}">${strToken}</span>`;
-        }
-        if (boolOrNullToken) {
-          return `<span class="json-literal">${boolOrNullToken}</span>`;
-        }
-        if (numberToken) {
-          return `<span class="json-number">${numberToken}</span>`;
-        }
-        return match;
-      }
-    );
-  });
+  const lines = createMemo(() => highlightJsonLines(result()?.output ?? ''));
 
   return (
     <div class="flex flex-col gap-3">
@@ -140,15 +116,26 @@ export default function JsonPanel(): JSX.Element {
             <span class="text-xs text-text-dim">输出</span>
             <CopyButton text={() => result()!.output} />
           </div>
+          <Show when={result()!.converted_from}>
+            <div class="p-1.5 text-xs text-primary bg-primary/10 border border-primary/20 rounded">
+              已按 URL 参数串解析
+            </div>
+          </Show>
           <Show when={result()!.error_msg}>
             <div class="p-2 text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded">
               {`行 ${result()!.error_line ?? '?'}: ${result()!.error_msg}`}
             </div>
           </Show>
-          <pre
-            class="w-full max-w-full min-w-0 min-h-24 p-2 text-sm text-text bg-surface-alt border border-border rounded overflow-x-hidden overflow-y-auto font-mono whitespace-pre-wrap break-words break-all select-text cursor-text"
-            innerHTML={highlightedHtml()}
-          />
+          <div class="json-out w-full max-w-full min-w-0 min-h-24 p-2 text-sm text-text bg-surface-alt border border-border rounded overflow-y-auto select-text">
+            <For each={lines()}>
+              {(html, i) => (
+                <div class="flex items-start">
+                  <span class="json-line-num">{i() + 1}</span>
+                  <pre class="flex-1 min-w-0 m-0 whitespace-pre-wrap break-words break-all" innerHTML={html} />
+                </div>
+              )}
+            </For>
+          </div>
         </div>
       </Show>
     </div>
