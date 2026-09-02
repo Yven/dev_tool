@@ -111,7 +111,7 @@ export default function NotesPanel(props: Props): JSX.Element {
                 />
               </Show>
               <button
-                class="w-4 h-4 flex items-center justify-center rounded-full bg-transparent text-text-dim hover:text-red-400 hover:bg-red-400/15"
+                class="w-4 h-4 flex items-center justify-center rounded-full appearance-none border-0 bg-transparent text-text-dim hover:text-red-400 hover:bg-red-400/15"
                 title="关闭"
                 onclick={(e) => { e.stopPropagation(); handleClose(buf.id); }}
               >×</button>
@@ -119,7 +119,7 @@ export default function NotesPanel(props: Props): JSX.Element {
           )}
         </For>
         <button
-          class="w-5 h-5 flex items-center justify-center rounded border border-transparent bg-transparent text-text hover:text-primary hover:bg-surface-alt hover:border-border"
+          class="w-5 h-5 flex items-center justify-center rounded appearance-none border-0 bg-transparent text-text hover:text-primary hover:bg-surface-alt"
           title="新建"
           onclick={handleAdd}
         >＋</button>
