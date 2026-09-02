@@ -213,7 +213,7 @@ export default function App(): JSX.Element {
         <div style={{ display: activeTab() === 'replace' ? 'block' : 'none' }}>
           <ReplacePanel />
         </div>
-        <div style={{ display: activeTab() === 'notes' ? 'block' : 'none' }}>
+        <div class="h-full" style={{ display: activeTab() === 'notes' ? 'block' : 'none' }}>
           <NotesPanel active={activeTab() === 'notes'} />
         </div>
         <Show when={activeTab().startsWith('plugin:')}>

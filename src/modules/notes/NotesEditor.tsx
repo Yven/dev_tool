@@ -7,6 +7,8 @@ interface Props {
   activeId: string;
   title: string;
   active?: boolean;
+  fontFamily: string;
+  fontSize: number;
 }
 
 const defaultBlock = () => `\n∞∞∞text-a;created=${new Date().toISOString()}\n`;
@@ -30,7 +32,7 @@ function installShim() {
         close: () => {},
       },
       platform: { isMac: false, isLinux: false, isWindows: true },
-      defaultFontSize: 13,
+      defaultFontSize: 14,
       defaultFontFamily: "monospace",
     };
   }
@@ -51,6 +53,8 @@ export default function NotesEditor(props: Props): JSX.Element {
       keymap: 'default',
       showLineNumberGutter: true,
       showFoldGutter: true,
+      fontFamily: props.fontFamily,
+      fontSize: props.fontSize,
     });
   });
 
@@ -70,6 +74,11 @@ export default function NotesEditor(props: Props): JSX.Element {
     } else {
       editor.hide();
     }
+  });
+
+  createEffect(() => {
+    if (!editor) return;
+    editor.setFont(props.fontFamily, props.fontSize);
   });
 
   onCleanup(() => {
