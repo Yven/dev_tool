@@ -46,23 +46,22 @@ export default function TabBar(props: Props): JSX.Element {
   };
 
   return (
-    <div class="tab-bar-wrapper py-1 bg-surface-alt border-b border-border">
+    <div class="tab-bar-wrapper bg-surface-alt">
       <div
         ref={barRef}
-        class="tab-bar flex flex-wrap gap-1"
+        class="tab-bar flex flex-wrap gap-0"
         style={{ "max-height": expanded() ? "none" : "28px", overflow: "hidden" }}
       >
         <For each={props.tabs}>
           {(tab) => (
             <button
-              class="flex items-center justify-center gap-1.5 px-2.5 py-1 text-xs rounded transition-colors whitespace-nowrap"
+              class="flex items-center justify-center px-2.5 py-1 text-xs text-white whitespace-nowrap transition-colors border-solid border-t border-l border-r border-b-0"
               classList={{
-                'bg-primary/40 text-white': props.active === tab.id,
-                'text-white/70 hover:text-white hover:bg-surface': props.active !== tab.id,
+                'bg-surface border-primary': props.active === tab.id,
+                'bg-transparent border-transparent hover:bg-white/5': props.active !== tab.id,
               }}
               onclick={() => props.onSelect(tab.id)}
             >
-              {tab.icon && <span class={tab.icon} />}
               <span>{tab.label}</span>
             </button>
           )}
@@ -73,8 +72,8 @@ export default function TabBar(props: Props): JSX.Element {
           <button
             class="w-8 h-[5px] flex items-center justify-center rounded border-0 outline-none transition-colors cursor-pointer"
             classList={{
-              'bg-primary/40 text-white': !expanded(),
-              'text-white/70 hover:text-white hover:bg-primary/20': expanded(),
+              'bg-white/10 text-white': !expanded(),
+              'text-white/70 hover:text-white hover:bg-white/10': expanded(),
             }}
             onclick={toggleExpand}
             title={expanded() ? '收起' : '展开'}

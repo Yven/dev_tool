@@ -1,6 +1,7 @@
 /* UnoCSS global reset + custom theme */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root { color-scheme: dark; }
+html { font-size: 106.25%; }
 html, body, #root {
   height: 100%;
   background: #1e1e1e;
@@ -79,7 +80,7 @@ input::placeholder {
 }
 .milkdown-code-block-lang {
   display: inline-block;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
   color: #808080;
   background: rgba(255,255,255,0.08);
@@ -92,7 +93,7 @@ input::placeholder {
 /* 笔记面板（heynote 分块编辑器的外层容器） */
 .notes-editor .cm-editor {
   height: 100%;
-  font-size: 14px;
+  font-size: 15px;
 }
 .notes-editor .cm-content {
   padding-bottom: 24px;
