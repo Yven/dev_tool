@@ -1,12 +1,12 @@
 import { JSX, createSignal, createEffect, onMount, onCleanup, For, Show } from 'solid-js';
-import NotesEditor from './NotesEditor';
+import NotesEditor, { NOTES_LANGUAGES } from './NotesEditor';
 import {
   NotesIndex, defaultIndex, addBuffer, renameBuffer, closeBuffer, setActive,
 } from './buffers';
 import { readIndex, writeIndex, deleteBuffer } from './files';
 
 const FONT_CACHE_KEY = 'cache:notes:font';
-const FONT_FAMILIES = ['monospace', 'Consolas', 'Cascadia Code', 'Segoe UI', 'system-ui'];
+const FONT_FAMILIES = ['Space Mono', 'Consolas', 'Cascadia Code', 'Segoe UI', 'system-ui'];
 const FONT_SIZES = [12, 13, 14, 15, 16, 18, 20, 22, 24];
 
 interface Props {
@@ -25,7 +25,7 @@ function loadFontPref(): { family: string; size: number } {
   } catch {
     /* 解析失败回退默认 */
   }
-  return { family: 'monospace', size: 14 };
+  return { family: 'Space Mono', size: 14 };
 }
 
 export default function NotesPanel(props: Props): JSX.Element {
@@ -75,9 +75,12 @@ export default function NotesPanel(props: Props): JSX.Element {
 
   const handleRename = (id: string, title: string) => setIndex((p) => renameBuffer(p, id, title));
 
+  const handleSetLanguage = (lang: string) => {
+    (window as any).__heynoteSetLanguage?.(lang);
+  };
+
   const activeId = () => index().activeId;
   const activeTitle = () => index().buffers.find((b) => b.id === activeId())?.title ?? '';
-  const langLabel = () => (status() ? `${status()!.language}${status()!.auto ? ' (自动)' : ''}` : '—');
 
   return (
     <div class="flex flex-col h-full">
@@ -108,7 +111,7 @@ export default function NotesPanel(props: Props): JSX.Element {
                 />
               </Show>
               <button
-                class="w-4 h-4 flex items-center justify-center rounded-full text-text-dim hover:text-red-400 hover:bg-red-400/15"
+                class="w-4 h-4 flex items-center justify-center rounded-full bg-transparent text-text-dim hover:text-red-400 hover:bg-red-400/15"
                 title="关闭"
                 onclick={(e) => { e.stopPropagation(); handleClose(buf.id); }}
               >×</button>
@@ -116,7 +119,7 @@ export default function NotesPanel(props: Props): JSX.Element {
           )}
         </For>
         <button
-          class="w-5 h-5 flex items-center justify-center rounded border border-transparent text-text hover:text-primary hover:bg-surface-alt hover:border-border"
+          class="w-5 h-5 flex items-center justify-center rounded border border-transparent bg-transparent text-text hover:text-primary hover:bg-surface-alt hover:border-border"
           title="新建"
           onclick={handleAdd}
         >＋</button>
@@ -133,9 +136,18 @@ export default function NotesPanel(props: Props): JSX.Element {
         />
       </div>
 
-      {/* 状态栏（当前块语言 + 字体字号设置 + 缓冲区数） */}
+      {/* 状态栏（当前块语言可选 + 字体字号设置 + 缓冲区数） */}
       <div class="flex items-center justify-between gap-3 pt-1 text-[11px] text-text-dim border-t border-border">
-        <span>语言：{langLabel()}</span>
+        <label class="flex items-center gap-1">
+          语言
+          <select
+            class="bg-surface-alt border border-border rounded px-1 py-0.5 text-[11px] text-text"
+            value={status()?.language ?? 'text'}
+            onchange={(e) => handleSetLanguage(e.currentTarget.value)}
+          >
+            {NOTES_LANGUAGES.map((l) => <option value={l.token}>{l.name}</option>)}
+          </select>
+        </label>
         <div class="flex items-center gap-3">
           <label class="flex items-center gap-1">
             字体

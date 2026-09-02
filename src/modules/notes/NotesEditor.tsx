@@ -1,7 +1,10 @@
 // @ts-nocheck
 import { JSX, createEffect, onCleanup, onMount } from 'solid-js';
 import { HeynoteEditor } from './heynote/editor.js';
+import { LANGUAGES } from './heynote/languages.js';
 import { readBuffer, saveBuffer } from './files';
+
+export const NOTES_LANGUAGES = LANGUAGES.map((l) => ({ token: l.token, name: l.name }));
 
 interface Props {
   activeId: string;
@@ -33,7 +36,7 @@ function installShim() {
       },
       platform: { isMac: false, isLinux: false, isWindows: true },
       defaultFontSize: 14,
-      defaultFontFamily: "monospace",
+      defaultFontFamily: "Space Mono",
     };
   }
 }
@@ -56,6 +59,8 @@ export default function NotesEditor(props: Props): JSX.Element {
       fontFamily: props.fontFamily,
       fontSize: props.fontSize,
     });
+    // 供 NotesPanel 的状态栏语言下拉调用
+    (window as any).__heynoteSetLanguage = (lang: string) => editor?.setCurrentLanguage(lang, false);
   });
 
   createEffect(() => {
@@ -82,6 +87,7 @@ export default function NotesEditor(props: Props): JSX.Element {
   });
 
   onCleanup(() => {
+    delete (window as any).__heynoteSetLanguage;
     editor?.destroy(true);
   });
 
