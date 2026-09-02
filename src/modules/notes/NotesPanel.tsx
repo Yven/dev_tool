@@ -1,11 +1,13 @@
 import { JSX, createSignal, createEffect, onMount, onCleanup, For, Show } from 'solid-js';
+import { invoke } from '@tauri-apps/api/core';
 import NotesEditor, { NOTES_LANGUAGES } from './NotesEditor';
 import {
-  NotesIndex, defaultIndex, addBuffer, renameBuffer, closeBuffer, setActive,
+  NotesIndex, defaultIndex, addBuffer, renameBuffer, closeToTrash, restoreFromTrash, setActive,
 } from './buffers';
 import { readIndex, writeIndex, deleteBuffer } from './files';
 
 const FONT_CACHE_KEY = 'cache:notes:font';
+const LANG_CACHE_KEY = 'cache:notes:language';
 const FONT_FAMILIES = ['Space Mono', 'Consolas', 'Cascadia Code', 'Segoe UI', 'system-ui'];
 const FONT_SIZES = [12, 13, 14, 15, 16, 18, 20, 22, 24];
 
@@ -28,14 +30,26 @@ function loadFontPref(): { family: string; size: number } {
   return { family: 'Space Mono', size: 14 };
 }
 
+function loadLangPref(): string {
+  try {
+    const lang = localStorage.getItem(LANG_CACHE_KEY);
+    if (lang) return lang;
+  } catch {
+    /* 解析失败回退默认 */
+  }
+  return 'text';
+}
+
 export default function NotesPanel(props: Props): JSX.Element {
   const [index, setIndex] = createSignal<NotesIndex>(defaultIndex());
   const [editingId, setEditingId] = createSignal<string | null>(null);
   const [status, setStatus] = createSignal<{ language: string; auto: boolean } | null>(null);
   const [ready, setReady] = createSignal(false);
+  const [trashOpen, setTrashOpen] = createSignal(false);
   const initialFont = loadFontPref();
   const [fontFamily, setFontFamily] = createSignal(initialFont.family);
   const [fontSize, setFontSize] = createSignal(initialFont.size);
+  const [defaultLanguage, setDefaultLanguage] = createSignal(loadLangPref());
 
   onMount(async () => {
     (window as any).__heynoteOnCursorChange = (info: any) => {
@@ -66,16 +80,37 @@ export default function NotesPanel(props: Props): JSX.Element {
 
   const handleAdd = () => setIndex((prev) => addBuffer(prev));
 
-  const handleClose = (id: string) => {
-    const prev = index();
-    if (prev.buffers.length <= 1) return;
-    setIndex((p) => closeBuffer(p, id));
-    deleteBuffer(`${id}.txt`).catch(() => {});
+  const handleClose = async (id: string) => {
+    if (index().buffers.length <= 1) return;
+    let ok = false;
+    try {
+      ok = await invoke<boolean>('notes_confirm', { message: '确定关闭该页签？' });
+    } catch (e) {
+      console.error('notes_confirm failed:', e);
+      return;
+    }
+    if (!ok) return;
+    const cur = index();
+    if (cur.buffers.length <= 1) return;
+    const { index: next, evictedId } = closeToTrash(cur, id);
+    setIndex(next);
+    if (evictedId) deleteBuffer(`${evictedId}.txt`).catch(() => {});
+  };
+
+  const handleRestore = (id: string) => {
+    setIndex((p) => restoreFromTrash(p, id));
+    setTrashOpen(false);
   };
 
   const handleRename = (id: string, title: string) => setIndex((p) => renameBuffer(p, id, title));
 
   const handleSetLanguage = (lang: string) => {
+    setDefaultLanguage(lang);
+    try {
+      localStorage.setItem(LANG_CACHE_KEY, lang);
+    } catch {
+      /* ignore */
+    }
     (window as any).__heynoteSetLanguage?.(lang);
   };
 
@@ -89,7 +124,7 @@ export default function NotesPanel(props: Props): JSX.Element {
         <For each={index().buffers}>
           {(buf) => (
             <div
-              class="flex items-center gap-1 pl-2 pr-1 py-1 text-xs rounded border cursor-pointer whitespace-nowrap"
+              class="flex items-center justify-between pl-3 pr-1.5 py-0.5 text-xs min-w-[82px] rounded border cursor-pointer whitespace-nowrap"
               classList={{
                 'border-primary bg-primary/15 text-primary': buf.id === activeId(),
                 'border-border text-text-dim hover:text-text': buf.id !== activeId(),
@@ -98,10 +133,10 @@ export default function NotesPanel(props: Props): JSX.Element {
             >
               <Show
                 when={editingId() === buf.id}
-                fallback={<span ondblclick={() => setEditingId(buf.id)}>{buf.title || '未命名'}</span>}
+                fallback={<span class="flex-1 min-w-0 truncate text-left" ondblclick={() => setEditingId(buf.id)}>{buf.title || '未命名'}</span>}
               >
                 <input
-                  class="w-20 bg-surface-alt border border-border rounded px-1"
+                  class="w-24 bg-surface-alt border border-border rounded px-1"
                   value={buf.title}
                   autofocus
                   onblur={(e) => { handleRename(buf.id, e.currentTarget.value); setEditingId(null); }}
@@ -111,7 +146,7 @@ export default function NotesPanel(props: Props): JSX.Element {
                 />
               </Show>
               <button
-                class="w-4 h-4 flex items-center justify-center rounded-full appearance-none border-0 bg-transparent text-text-dim hover:text-red-400 hover:bg-red-400/15"
+                class="w-4 h-4 shrink-0 flex items-center justify-center rounded-full appearance-none border-0 bg-transparent text-text-dim hover:text-red-400 hover:bg-red-400/15"
                 title="关闭"
                 onclick={(e) => { e.stopPropagation(); handleClose(buf.id); }}
               >×</button>
@@ -133,6 +168,7 @@ export default function NotesPanel(props: Props): JSX.Element {
           active={props.active}
           fontFamily={fontFamily()}
           fontSize={fontSize()}
+          defaultLanguage={defaultLanguage()}
         />
       </div>
 
@@ -170,7 +206,42 @@ export default function NotesPanel(props: Props): JSX.Element {
             </select>
           </label>
         </div>
-        <span>{index().buffers.length} 个缓冲区</span>
+        <div class="relative flex items-center gap-2">
+          <span>{index().buffers.length} 个缓冲区</span>
+          <button
+            class="flex items-center justify-center w-5 h-5 rounded appearance-none border-0 bg-transparent text-text-dim hover:text-text hover:bg-surface"
+            title="回收站"
+            onclick={() => setTrashOpen((v) => !v)}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18" />
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+            </svg>
+          </button>
+          <Show when={trashOpen()}>
+            <div class="absolute bottom-full right-0 mb-1 w-44 max-h-48 overflow-auto bg-surface-alt border border-border rounded shadow-lg p-1 z-20">
+              <Show
+                when={index().trash.length > 0}
+                fallback={<div class="px-2 py-1 text-text-dim">回收站为空</div>}
+              >
+                <For each={[...index().trash].reverse()}>
+                  {(b) => (
+                    <button
+                      class="w-full text-left px-2 py-1 text-xs text-text hover:bg-surface rounded truncate"
+                      title={b.title || '未命名'}
+                      onclick={() => handleRestore(b.id)}
+                    >
+                      {b.title || '未命名'}
+                    </button>
+                  )}
+                </For>
+              </Show>
+            </div>
+          </Show>
+        </div>
       </div>
     </div>
   );

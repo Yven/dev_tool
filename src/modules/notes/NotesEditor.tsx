@@ -12,6 +12,7 @@ interface Props {
   active?: boolean;
   fontFamily: string;
   fontSize: number;
+  defaultLanguage?: string;
 }
 
 const defaultBlock = () => `\n∞∞∞text-a;created=${new Date().toISOString()}\n`;
@@ -58,6 +59,8 @@ export default function NotesEditor(props: Props): JSX.Element {
       showFoldGutter: true,
       fontFamily: props.fontFamily,
       fontSize: props.fontSize,
+      defaultBlockToken: props.defaultLanguage || 'text',
+      defaultBlockAutoDetect: (props.defaultLanguage || 'text') === 'text',
     });
     // 供 NotesPanel 的状态栏语言下拉调用
     (window as any).__heynoteSetLanguage = (lang: string) => editor?.setCurrentLanguage(lang, false);
@@ -84,6 +87,12 @@ export default function NotesEditor(props: Props): JSX.Element {
   createEffect(() => {
     if (!editor) return;
     editor.setFont(props.fontFamily, props.fontSize);
+  });
+
+  createEffect(() => {
+    if (!editor) return;
+    const lang = props.defaultLanguage || 'text';
+    editor.setDefaultBlockLanguage(lang, lang === 'text');
   });
 
   onCleanup(() => {

@@ -1,10 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
-import { NotesIndex } from './buffers';
+import { NotesIndex, parseIndex } from './buffers';
 
 export async function readIndex(): Promise<NotesIndex | null> {
   const json = await invoke<string | null>('notes_read_index');
   if (json == null || json === '') return null;
-  return JSON.parse(json) as NotesIndex;
+  return parseIndex(json);
 }
 
 export async function writeIndex(index: NotesIndex): Promise<void> {

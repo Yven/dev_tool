@@ -2,6 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use tauri::{AppHandle, Manager};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons, MessageDialogKind};
 
 fn notes_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let app_data = app.path().app_data_dir().map_err(|e| e.to_string())?;
@@ -67,6 +68,18 @@ pub fn notes_delete(app: AppHandle, path: String) -> Result<(), String> {
         fs::remove_file(&p).map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+#[tauri::command]
+pub async fn notes_confirm(app: AppHandle, message: String) -> Result<bool, String> {
+    let ok = app
+        .dialog()
+        .message(message)
+        .title("DevTool")
+        .kind(MessageDialogKind::Warning)
+        .buttons(MessageDialogButtons::OkCancel)
+        .blocking_show();
+    Ok(ok)
 }
 
 #[cfg(test)]
