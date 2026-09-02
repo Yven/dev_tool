@@ -60,7 +60,7 @@ export default function ReplacePanel(): JSX.Element {
       <div class="flex items-center gap-2">
         <input
           type="text"
-          class="flex-1 px-2 py-1 text-sm bg-surface-alt border border-border rounded outline-none focus:border-primary font-mono select-text"
+          class="flex-1 min-w-0 px-2 py-1 text-sm bg-surface-alt border border-border rounded outline-none focus:border-primary font-mono select-text"
           value={search()}
           onInput={(e) => setSearch(e.currentTarget.value)}
           placeholder="搜索文本"
@@ -68,7 +68,7 @@ export default function ReplacePanel(): JSX.Element {
         <span class="text-xs text-text-dim">→</span>
         <input
           type="text"
-          class="flex-1 px-2 py-1 text-sm bg-surface-alt border border-border rounded outline-none focus:border-primary font-mono select-text"
+          class="flex-1 min-w-0 px-2 py-1 text-sm bg-surface-alt border border-border rounded outline-none focus:border-primary font-mono select-text"
           value={replacement()}
           onInput={(e) => setReplacement(e.currentTarget.value)}
           placeholder="替换文本"

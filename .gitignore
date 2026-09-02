@@ -7,3 +7,5 @@ src-tauri/target/
 .claude/
 *.swp
 *.swo
+.worktrees/
+.pnpm-store/
