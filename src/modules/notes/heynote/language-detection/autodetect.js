@@ -6,6 +6,7 @@ import { levenshtein_distance } from "./levenshtein";
 import { LANGUAGES } from "../languages";
 import { changeLanguageTo } from "../block/commands";
 import { LANGUAGE_CHANGE } from "../annotation";
+import { formatBlockContent } from "../block/format-code.js"; // [DEVTool]
 
 const GUESSLANG_TO_TOKEN = Object.fromEntries(LANGUAGES.map(l => [l.guesslang,l.token]))
 
@@ -28,6 +29,7 @@ function cancelIdleCallbackCompat(id) {
 // we'll use a shared global web worker for the language detection, for multiple Editor instances
 const editorInstances = {}
 const detectionWorker = new Worker('langdetect-worker.js?worker');
+let justPasted = false; // [DEVTool] 粘贴自动格式化标记
 detectionWorker.onmessage = (event) => {
     //console.log("event:", event.data)
     if (!event.data.guesslang.language) {
@@ -40,6 +42,8 @@ detectionWorker.onmessage = (event) => {
     const state = view.state
     const block = getActiveNoteBlock(state)
     const newLang = GUESSLANG_TO_TOKEN[event.data.guesslang.language]
+    const wasPasted = justPasted
+    justPasted = false // [DEVTool] 消费粘贴标记
     if (block.language.auto === true && block.language.name !== newLang) {
         //console.log("New auto detected language:", newLang, "Confidence:", event.data.guesslang.confidence)
         let content = state.doc.sliceString(block.content.from, block.content.to)
@@ -49,6 +53,10 @@ detectionWorker.onmessage = (event) => {
             if (redoDepth(state) === 0) {
                 console.log("Changing language to", newLang)
                 changeLanguageTo(state, view.dispatch, block, newLang, true)
+                // [DEVTool] 粘贴后语言识别完成 → 自动格式化（Prettier 支持的语言）
+                if (wasPasted) {
+                    formatBlockContent({ state: view.state, dispatch: view.dispatch }).catch(() => {})
+                }
             } else {
                 console.log("Not changing language because the user has undo:ed and has redo history")
             }
@@ -68,6 +76,9 @@ export function languageDetection(path, getEditor) {
     const plugin = ViewPlugin.fromClass(
         class {
             update(update) {
+                if (update.transactions.some(tr => tr.isUserEvent("input.paste"))) {
+                    justPasted = true
+                }
                 if (update.docChanged) {
                     if (idleCallbackId !== null) {
                         cancelIdleCallbackCompat(idleCallbackId)
