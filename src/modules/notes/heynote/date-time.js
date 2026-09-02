@@ -1,5 +1,4 @@
-import { useHeynoteStore } from "@/src/stores/heynote-store"
-import { formatFullDateWithoutSeconds } from "../common/format-date"
+import { formatFullDateWithoutSeconds } from "./common/format-date"
 
 
 export const insertDateAndTime = ({ state, dispatch }) => {
@@ -7,8 +6,7 @@ export const insertDateAndTime = ({ state, dispatch }) => {
         return false
     }
 
-    const heynoteStore = useHeynoteStore()
-    const dateText = formatFullDateWithoutSeconds(new Date(), heynoteStore.systemLocale)
+    const dateText = formatFullDateWithoutSeconds(new Date(), navigator.language)
 
     dispatch(state.replaceSelection(dateText),
         {

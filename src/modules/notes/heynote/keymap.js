@@ -159,7 +159,6 @@ export const EMACS_KEYMAP = [
     ...cmdShift("Ctrl-a", "cursorLineStart", "selectLineStart"),
     ...cmdShift("Ctrl-e", "cursorLineEnd", "selectLineEnd"),
     // tabs
-    cmd("Ctrl-x k", "closeCurrentTab"),
 ]
 
 

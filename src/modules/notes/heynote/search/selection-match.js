@@ -4,7 +4,6 @@ import { EditorSelection, Facet, combineConfig, CharCategory } from "@codemirror
 
 import { SearchCursor } from "@codemirror/search"
 
-import { useSettingsStore } from "@/src/stores/settings-store.js"
 import { getActiveNoteBlock } from "../block/block.js"
 import { delimiterRegexWithoutNewline } from "../block/block.js"
 import { transactionsHasAnnotation, SEARCH_SETTINGS_UPDATED } from "../annotation.js"
@@ -93,12 +92,7 @@ const matchHighlighter = ViewPlugin.fromClass(class {
             }
         }
 
-        const settingsStore = useSettingsStore()
-        let fullWord = false
-        if (settingsStore.settings.searchSettings?.wholeWord) {
-            let word = state.wordAt(range.from)
-            fullWord = word && word.from == range.from && word.to == range.to;
-        }
+        let fullWord = false // [DEVTool] 搜索设置默认关闭 wholeWord
         const isSelection = (from, to) => {
             return sel.ranges.some(range => range.from == from && range.to == to)
         }
@@ -150,35 +144,24 @@ const selectWord = ({ state, dispatch }) => {
 
 
 function currentBlockTestFilter(state) {
-    const settingsStore = useSettingsStore()
     const currentBlock = getActiveNoteBlock(state)
-    const onlyCurrentBlock = settingsStore.settings.searchSettings === undefined ? true : settingsStore.settings.searchSettings.onlyCurrentBlock
+    const onlyCurrentBlock = true // [DEVTool]
 
     return searchTestFunction(onlyCurrentBlock, currentBlock)
 }
 
 
 function normalizeFunc() {
-    const settingsStore = useSettingsStore()
-    if (settingsStore.settings.searchSettings?.caseSensitive) {
-        return (x) => x
-    } else {
-        return (x) => x.toLowerCase()
-    }
+    return (x) => x.toLowerCase() // [DEVTool] 默认忽略大小写
 }
 
 // Find next occurrence of query relative to last cursor. Wrap around 
 // the document if there are no more matches.
 function findNextOccurrence(state, query) {
     //console.log("findNextOccurrence")
-    const settingsStore = useSettingsStore()
     let { main, ranges } = state.selection;
-    
-    let fullWord = false
-    if (settingsStore.settings.searchSettings?.wholeWord) {
-        let word = state.wordAt(main.head)
-        fullWord = word && word.from == main.from && word.to == main.to;
-    }
+
+    let fullWord = false // [DEVTool]
     const caseSensitiveNormalize = normalizeFunc()
 
     for (let cycled = false, cursor = new SearchCursor(
