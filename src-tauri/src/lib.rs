@@ -27,6 +27,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_positioner::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         // 自定义 Commands
         .invoke_handler(tauri::generate_handler![
             commands::timestamp::cmd_timestamp_convert,
@@ -48,6 +49,9 @@ pub fn run() {
             commands::notes::notes_write,
             commands::notes::notes_delete,
             commands::notes::notes_confirm,
+            commands::tasks::tasks_read,
+            commands::tasks::tasks_write,
+            commands::tasks::tasks_confirm,
         ])
         .setup(|app| {
             // 注册全局热键（Ctrl+Alt+D 显示/最小化切换）

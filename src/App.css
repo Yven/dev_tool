@@ -113,3 +113,107 @@ input::placeholder {
   padding-bottom: 24px;
 }
 
+
+/* 任务面板：卡片基础外观 */
+.task-card {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+/* 任务面板：紧急标记 */
+.task-card-wrap + .task-card-wrap {
+  margin-top: 6px;
+}
+.task-urgent-ring {
+  border: 1px solid #ef4444;
+  padding: 2px;
+  border-radius: 5px;
+}
+
+/* 任务面板：正文 Markdown 排版 */
+.task-md {
+  font-size: 12px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.task-md > :first-child {
+  margin-top: 0;
+}
+.task-md > :last-child {
+  margin-bottom: 0;
+}
+.task-md p,
+.task-md ul,
+.task-md ol,
+.task-md blockquote,
+.task-md pre,
+.task-md table {
+  margin: 0.25em 0;
+}
+.task-md h1,
+.task-md h2,
+.task-md h3,
+.task-md h4,
+.task-md h5,
+.task-md h6 {
+  margin: 0.3em 0;
+  font-size: 1.05em;
+  font-weight: 600;
+}
+.task-md ul,
+.task-md ol {
+  padding-left: 1.2em;
+}
+.task-md ul {
+  list-style: disc;
+}
+.task-md ol {
+  list-style: decimal;
+}
+.task-md code {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  padding: 0 3px;
+  font-size: 0.95em;
+}
+.task-md pre {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+  padding: 6px 8px;
+  overflow-x: auto;
+}
+.task-md pre code {
+  background: transparent;
+  padding: 0;
+}
+.task-md blockquote {
+  border-left: 2px solid #3c3c3c;
+  padding-left: 8px;
+  color: #a0a0a0;
+}
+.task-md a {
+  color: #0078d4;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.task-md table {
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+.task-md th,
+.task-md td {
+  border: 1px solid #3c3c3c;
+  padding: 2px 6px;
+}
+
+/* 任务面板：备注（比任务更小、灰色） */
+.task-note-md {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #8a8a8a;
+  cursor: text;
+}
