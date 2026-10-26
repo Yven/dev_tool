@@ -19,17 +19,14 @@ export default function TaskCard(props: TaskCardProps) {
   const [draft, setDraft] = createSignal('');
   const [noteEditing, setNoteEditing] = createSignal(false);
   const [noteDraft, setNoteDraft] = createSignal('');
-  let root: HTMLDivElement | undefined;
 
   const meta = () => STATUS_META[props.task.status];
-  const anyOpen = () => statusOpen() || menuOpen();
 
   onMount(() => {
     const onPointerDown = (event: PointerEvent) => {
-      if (anyOpen() && root && !root.contains(event.target as Node)) {
-        setStatusOpen(false);
-        setMenuOpen(false);
-      }
+      const target = event.target as HTMLElement | null;
+      if (statusOpen() && !target?.closest('[data-task-status]')) setStatusOpen(false);
+      if (menuOpen() && !target?.closest('[data-task-menu]')) setMenuOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -102,126 +99,150 @@ export default function TaskCard(props: TaskCardProps) {
   };
 
   return (
-    <div classList={{ 'task-card-wrap': true, 'task-urgent-ring': props.task.urgent }}>
+    <div
+      classList={{ 'task-card-wrap': true, 'task-urgent-ring': props.task.urgent }}
+      style={{ 'view-transition-name': `task-${props.task.id}` }}
+    >
       <div
-        ref={root}
-        class="task-card group flex items-start gap-2"
+        class="task-card group flex flex-col gap-1"
         style={{ background: meta().bg, 'border-color': meta().border }}
       >
-        <button
-          class="task-urgent shrink-0 text-xs leading-5"
-          classList={{
-            'opacity-0 group-hover:opacity-100 focus-visible:opacity-100': !props.task.urgent,
-          }}
-          aria-label={props.task.urgent ? '取消紧急' : '标记紧急'}
-          title={props.task.urgent ? '取消紧急' : '标记紧急'}
-          onclick={() => props.onUrgent(props.task.id)}
-        >
-          ⚠️
-        </button>
-
-        <div class="min-w-0 flex-1">
-          <Show
-            when={editing()}
-            fallback={
-              <div
-                class="task-md break-words text-xs leading-5 text-text"
-                ondblclick={startEdit}
-                innerHTML={renderMarkdown(props.task.content)}
-              />
-            }
+        <div class="flex items-start gap-2">
+          <button
+            class="task-urgent shrink-0 self-center rounded border-0 bg-transparent text-[13px] leading-5 shadow-none outline-none transition-[transform,background-color,box-shadow] duration-150 hover:scale-110 hover:bg-red-400/15 hover:shadow-[0_0_8px_rgba(239,68,68,0.45)] active:scale-95"
+            classList={{
+              'opacity-0 hover:opacity-100 focus-visible:opacity-100': !props.task.urgent,
+            }}
+            aria-label={props.task.urgent ? '取消紧急' : '标记紧急'}
+            title={props.task.urgent ? '取消紧急' : '标记紧急'}
+            onclick={() => props.onUrgent(props.task.id)}
           >
-            <textarea
-              class="w-full resize-none rounded border border-border bg-surface px-2 py-1 text-xs leading-5 text-text outline-none focus:border-primary"
-              rows={4}
-              value={draft()}
-              ref={(el) => queueMicrotask(() => el.focus())}
-              onInput={(e) => setDraft(e.currentTarget.value)}
-              onKeyDown={onEditKeyDown}
-            />
-          </Show>
+            ⚠️
+          </button>
 
-          <div class="mt-0.5">
-            <button
-              class="flex items-center gap-1 text-[10px] text-text-dim hover:text-text"
-              onclick={startNote}
+          <div class="min-w-0 flex-1">
+            <Show
+              when={editing()}
+              fallback={
+                <div
+                  class="task-md break-words text-[13px] leading-5 text-text"
+                  ondblclick={startEdit}
+                  innerHTML={renderMarkdown(props.task.content)}
+                />
+              }
             >
-              备注
-              <span class="i-carbon-edit text-[10px]" />
-            </button>
-            <Show when={noteEditing()}>
               <textarea
-                class="mt-1 w-full resize-none rounded border border-border bg-surface px-2 py-1 text-[11px] leading-4 text-text-dim outline-none focus:border-primary"
-                rows={2}
-                value={noteDraft()}
+                class="w-full resize-none rounded border border-border bg-surface px-2 py-1 text-[13px] leading-5 text-text outline-none focus:border-primary"
+                rows={4}
+                value={draft()}
                 ref={(el) => queueMicrotask(() => el.focus())}
-                onInput={(e) => setNoteDraft(e.currentTarget.value)}
-                onKeyDown={onNoteKeyDown}
+                onInput={(e) => setDraft(e.currentTarget.value)}
+                onKeyDown={onEditKeyDown}
               />
             </Show>
-            <Show when={!noteEditing() && props.task.note.trim() !== ''}>
-              <div
-                class="task-md task-note-md break-words"
-                onclick={startNote}
-                innerHTML={renderMarkdown(props.task.note)}
-              />
-            </Show>
-          </div>
-        </div>
 
-        <div class="relative shrink-0">
-          <button
-            class="flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] transition-colors"
-            style={{ background: meta().bg, 'border-color': meta().border, color: meta().dot }}
-            onclick={() => {
-              setMenuOpen(false);
-              setStatusOpen(!statusOpen());
-            }}
-          >
-            <span class="h-1.5 w-1.5 rounded-full" style={{ background: meta().dot }} />
-            {meta().label}
-          </button>
-          <Show when={statusOpen()}>
-            <div class="absolute right-0 top-full z-20 mt-1 w-24 rounded border border-border bg-surface-alt py-1 shadow-lg">
-              <For each={STATUS_ORDER}>
-                {(status) => (
-                  <button
-                    class="flex w-full items-center gap-1.5 px-2 py-1 text-left text-[11px] text-text hover:bg-white/5"
-                    onclick={() => pickStatus(status)}
-                  >
-                    <span
-                      class="h-1.5 w-1.5 rounded-full"
-                      style={{ background: STATUS_META[status].dot }}
-                    />
-                    {STATUS_META[status].label}
-                  </button>
-                )}
-              </For>
-            </div>
-          </Show>
-        </div>
-
-        <div class="relative shrink-0">
-          <button
-            class="rounded px-1 text-xs leading-5 text-text-dim hover:bg-white/5 hover:text-text"
-            aria-label="更多操作"
-            onclick={() => {
-              setStatusOpen(false);
-              setMenuOpen(!menuOpen());
-            }}
-          >
-            ...
-          </button>
-          <Show when={menuOpen()}>
-            <div class="absolute right-0 top-full z-20 mt-1 w-20 rounded border border-border bg-surface-alt py-1 shadow-lg">
+            <div class="mt-1 flex items-start gap-1.5 pl-3">
               <button
-                class="w-full px-2 py-1 text-left text-[11px] text-red-400 hover:bg-red-400/10"
-                onclick={() => void remove()}
+                class="flex shrink-0 items-center gap-1 border-0 bg-transparent text-[11px] text-text-dim shadow-none outline-none hover:text-text"
+                onclick={startNote}
               >
-                删除
+                备注
+                <span class="i-carbon-edit text-[10px]" />
               </button>
+              <div class="min-w-0 flex-1">
+                <Show when={noteEditing()}>
+                  <textarea
+                    class="w-full resize-none rounded border border-border bg-surface px-2 py-1 text-[12px] leading-4 text-text-dim outline-none focus:border-primary"
+                    rows={2}
+                    value={noteDraft()}
+                    ref={(el) => queueMicrotask(() => el.focus())}
+                    onInput={(e) => setNoteDraft(e.currentTarget.value)}
+                    onKeyDown={onNoteKeyDown}
+                  />
+                </Show>
+                <Show when={!noteEditing() && props.task.note.trim() !== ''}>
+                  <div
+                    class="task-md task-note-md break-words"
+                    onclick={startNote}
+                    innerHTML={renderMarkdown(props.task.note)}
+                  />
+                </Show>
+              </div>
             </div>
-          </Show>
+          </div>
+
+          <div class="flex shrink-0 items-center gap-1">
+            <Show
+              when={statusOpen()}
+              fallback={
+                <button
+                  data-task-status
+                  class="flex h-[22px] items-center gap-1 rounded border px-2 text-[12px] transition-colors"
+                  style={{
+                    background: meta().bg,
+                    'border-color': meta().border,
+                    color: meta().dot,
+                  }}
+                  onclick={() => {
+                    setMenuOpen(false);
+                    setStatusOpen(true);
+                  }}
+                >
+                  <span class="h-1.5 w-1.5 rounded-full" style={{ background: meta().dot }} />
+                  {meta().label}
+                </button>
+              }
+            >
+              <div data-task-status class="task-status-pop flex items-center gap-1">
+                <For each={STATUS_ORDER}>
+                  {(status) => (
+                    <button
+                      class="flex h-[22px] items-center gap-1 rounded border px-2 text-[12px] transition-colors"
+                      style={{
+                        background: STATUS_META[status].bg,
+                        'border-color': STATUS_META[status].border,
+                        color: STATUS_META[status].dot,
+                      }}
+                      onclick={() => pickStatus(status)}
+                    >
+                      <span
+                        class="h-1.5 w-1.5 rounded-full"
+                        style={{ background: STATUS_META[status].dot }}
+                      />
+                      {STATUS_META[status].label}
+                    </button>
+                  )}
+                </For>
+              </div>
+            </Show>
+
+            <div class="relative">
+              <button
+                data-task-menu
+                class="flex h-[22px] items-center rounded border border-border bg-transparent px-2 text-[12px] text-text-dim hover:text-text"
+                aria-label="更多操作"
+                onclick={() => {
+                  setStatusOpen(false);
+                  setMenuOpen(!menuOpen());
+                }}
+              >
+                <span class="text-[14px] leading-none">⋯</span>
+              </button>
+              <Show when={menuOpen()}>
+                <div
+                  data-task-menu
+                  class="absolute right-0 top-full z-20 mt-1 w-20 rounded border border-border bg-surface-alt py-1 shadow-lg"
+                >
+                  <button
+                    class="w-full bg-transparent px-2 py-1 text-left text-[12px] text-red-400 hover:bg-red-400/10"
+                    onclick={() => void remove()}
+                  >
+                    删除
+                  </button>
+                </div>
+              </Show>
+            </div>
+          </div>
         </div>
       </div>
     </div>

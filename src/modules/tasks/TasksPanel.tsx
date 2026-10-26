@@ -61,16 +61,27 @@ export default function TasksPanel() {
     }
   };
 
+  const withReorder = (update: () => void) => {
+    const doc = document as Document & {
+      startViewTransition?: (callback: () => void) => unknown;
+    };
+    if (typeof doc.startViewTransition !== 'function') {
+      update();
+      return;
+    }
+    doc.startViewTransition(update);
+  };
+
   const changeStatus = (id: string, status: TaskStatus) => {
-    setTasks(setStatus(tasks(), id, status));
+    withReorder(() => setTasks(setStatus(tasks(), id, status)));
   };
 
   const changeUrgent = (id: string) => {
-    setTasks(toggleUrgent(tasks(), id));
+    withReorder(() => setTasks(toggleUrgent(tasks(), id)));
   };
 
   const changeContent = (id: string, content: string) => {
-    setTasks(updateContent(tasks(), id, content, Date.now()));
+    withReorder(() => setTasks(updateContent(tasks(), id, content, Date.now())));
   };
 
   const changeNote = (id: string, note: string) => {
@@ -99,7 +110,7 @@ export default function TasksPanel() {
     <div class="flex h-full flex-col gap-3" onclick={handleLink}>
       <div class="shrink-0">
         <textarea
-          class="w-full resize-none rounded border border-border bg-surface-alt px-2 py-1.5 text-xs leading-5 text-text outline-none focus:border-primary"
+          class="w-full resize-none rounded border border-border bg-surface-alt px-2 py-1.5 text-[13px] leading-5 text-text outline-none focus:border-primary"
           rows={3}
           placeholder={'第一行：分类\n第二行起：任务内容'}
           value={input()}
@@ -108,24 +119,26 @@ export default function TasksPanel() {
         />
         <div class="mt-1 flex items-center justify-between">
           <Show when={error()}>
-            <span class="text-[11px] text-red-400">{error()}</span>
+            <span class="text-[12px] text-red-400">{error()}</span>
           </Show>
-          <span class="ml-auto text-[11px] text-text-dim">Ctrl+Enter 添加</span>
+          <span class="ml-auto text-[12px] text-text-dim">Ctrl+Enter 添加</span>
         </div>
       </div>
 
       <div class="min-h-0 flex-1 overflow-auto">
         <Show when={groups().length === 0}>
-          <div class="py-8 text-center text-xs text-text-dim">
+          <div class="py-8 text-center text-[13px] text-text-dim">
             还没有任务，输入第一行分类、第二行开始写任务，Ctrl+Enter 添加
           </div>
         </Show>
         <For each={groups()}>
           {(group) => (
             <section class="mb-4">
-              <div class="mb-1.5 flex items-center gap-1.5 text-xs text-text-dim">
-                <span class="uppercase">{group.name}</span>
-                <span class="text-[10px]">{group.tasks.length}</span>
+              <div class="mb-1.5 flex items-baseline gap-1.5">
+                <span class="text-[14px] font-semibold text-text">{group.name}</span>
+                <span class="rounded-full bg-white/10 px-1.5 text-[11px] leading-4 text-text-dim">
+                  {group.tasks.length}
+                </span>
               </div>
               <For each={group.tasks}>
                 {(task) => (
@@ -141,7 +154,7 @@ export default function TasksPanel() {
               </For>
               <Show when={group.completed.length > 0}>
                 <button
-                  class="mt-1.5 flex items-center gap-1 text-[11px] text-text-dim hover:text-text"
+                  class="mt-1.5 flex items-center gap-1 border-0 bg-transparent text-[12px] text-text-dim shadow-none outline-none hover:text-text"
                   onclick={() => toggleDone(group.name)}
                 >
                   <span>{openDone()[group.name] ? '▾' : '▸'}</span>
@@ -151,15 +164,15 @@ export default function TasksPanel() {
                   <div class="mt-1.5">
                     <For each={group.completed}>
                       {(task) => (
-                  <TaskCard
-                    task={task}
-                    onStatus={changeStatus}
-                    onUrgent={changeUrgent}
-                    onContent={changeContent}
-                    onNote={changeNote}
-                    onDelete={remove}
-                  />
-                )}
+                        <TaskCard
+                          task={task}
+                          onStatus={changeStatus}
+                          onUrgent={changeUrgent}
+                          onContent={changeContent}
+                          onNote={changeNote}
+                          onDelete={remove}
+                        />
+                      )}
                     </For>
                   </div>
                 </Show>

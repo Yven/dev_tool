@@ -134,7 +134,7 @@ input::placeholder {
 
 /* 任务面板：正文 Markdown 排版 */
 .task-md {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.55;
   overflow-wrap: anywhere;
 }
@@ -211,9 +211,40 @@ input::placeholder {
 
 /* 任务面板：备注（比任务更小、灰色） */
 .task-note-md {
-  margin-top: 2px;
-  font-size: 11px;
+  margin-top: 0;
+  font-size: 12px;
   line-height: 1.5;
   color: #8a8a8a;
-  cursor: text;
+  cursor: pointer;
+}
+
+/* 任务面板：状态按钮就地展开动效 */
+.task-status-pop {
+  transform-origin: right center;
+  animation: task-status-pop 0.18s ease-out;
+}
+@keyframes task-status-pop {
+  from {
+    opacity: 0;
+    transform: translateX(8px) scaleX(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+/* 可点击元素统一手型光标 */
+button {
+  cursor: pointer;
+}
+
+/* 任务面板：编辑后重排的视图过渡 */
+::view-transition-group(*) {
+  animation-duration: 0.22s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 0.18s;
 }
