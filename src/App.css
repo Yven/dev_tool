@@ -215,7 +215,7 @@ input::placeholder {
   font-size: 12px;
   line-height: 1.5;
   color: #8a8a8a;
-  cursor: pointer;
+  cursor: default;
 }
 
 /* 任务面板：状态按钮就地展开动效 */
@@ -247,4 +247,19 @@ button {
 ::view-transition-old(*),
 ::view-transition-new(*) {
   animation-duration: 0.18s;
+}
+
+/* 任务面板：滚动条默认隐藏，鼠标移入列表区域才显示 */
+.task-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.task-scroll.is-visible::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+}
+.task-scroll::-webkit-scrollbar-thumb:hover {
+  background: #6a6a6a;
+}
+
+.task-scroll::-webkit-scrollbar-track {
+  background: transparent;
 }

@@ -53,6 +53,11 @@ export default function TaskCard(props: TaskCardProps) {
     if (ok) props.onDelete(props.task.id);
   };
 
+  const grow = (el: HTMLTextAreaElement) => {
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
   const startEdit = () => {
     setDraft(props.task.content);
     setEditing(true);
@@ -74,6 +79,12 @@ export default function TaskCard(props: TaskCardProps) {
       event.preventDefault();
       saveEdit();
     }
+  };
+
+  const formatEditedAt = (ts: number) => {
+    const d = new Date(ts);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
   };
 
   const startNote = () => {
@@ -132,11 +143,19 @@ export default function TaskCard(props: TaskCardProps) {
               }
             >
               <textarea
-                class="w-full resize-none rounded border border-border bg-surface px-2 py-1 text-[13px] leading-5 text-text outline-none focus:border-primary"
+                class="min-h-[44px] w-full resize-none overflow-hidden rounded border border-border bg-surface px-2 py-1 text-[13px] leading-5 text-text outline-none focus:border-primary"
                 rows={4}
                 value={draft()}
-                ref={(el) => queueMicrotask(() => el.focus())}
-                onInput={(e) => setDraft(e.currentTarget.value)}
+                ref={(el) =>
+                  queueMicrotask(() => {
+                    el.focus();
+                    grow(el);
+                  })
+                }
+                onInput={(e) => {
+                  setDraft(e.currentTarget.value);
+                  grow(e.currentTarget);
+                }}
                 onKeyDown={onEditKeyDown}
               />
             </Show>
@@ -144,6 +163,10 @@ export default function TaskCard(props: TaskCardProps) {
             <div class="mt-1 flex items-start gap-1.5 pl-3">
               <button
                 class="flex shrink-0 items-center gap-1 border-0 bg-transparent text-[11px] text-text-dim shadow-none outline-none hover:text-text"
+                classList={{
+                  'opacity-0 group-hover:opacity-100 focus-visible:opacity-100':
+                    props.task.note.trim() === '',
+                }}
                 onclick={startNote}
               >
                 备注
@@ -152,18 +175,26 @@ export default function TaskCard(props: TaskCardProps) {
               <div class="min-w-0 flex-1">
                 <Show when={noteEditing()}>
                   <textarea
-                    class="w-full resize-none rounded border border-border bg-surface px-2 py-1 text-[12px] leading-4 text-text-dim outline-none focus:border-primary"
+                    class="min-h-[40px] w-full resize-none overflow-hidden rounded border border-border bg-surface px-2 py-1 text-[12px] leading-4 text-text-dim outline-none focus:border-primary"
                     rows={2}
                     value={noteDraft()}
-                    ref={(el) => queueMicrotask(() => el.focus())}
-                    onInput={(e) => setNoteDraft(e.currentTarget.value)}
+                    ref={(el) =>
+                      queueMicrotask(() => {
+                        el.focus();
+                        grow(el);
+                      })
+                    }
+                    onInput={(e) => {
+                      setNoteDraft(e.currentTarget.value);
+                      grow(e.currentTarget);
+                    }}
                     onKeyDown={onNoteKeyDown}
                   />
                 </Show>
                 <Show when={!noteEditing() && props.task.note.trim() !== ''}>
                   <div
                     class="task-md task-note-md break-words"
-                    onclick={startNote}
+                    ondblclick={startNote}
                     innerHTML={renderMarkdown(props.task.note)}
                   />
                 </Show>
@@ -171,9 +202,10 @@ export default function TaskCard(props: TaskCardProps) {
             </div>
           </div>
 
-          <div class="flex shrink-0 items-center gap-1">
-            <Show
-              when={statusOpen()}
+          <div class="flex shrink-0 flex-col items-end gap-1">
+            <div class="flex items-center gap-1">
+              <Show
+                when={statusOpen()}
               fallback={
                 <button
                   data-task-status
@@ -234,7 +266,7 @@ export default function TaskCard(props: TaskCardProps) {
                   class="absolute right-0 top-full z-20 mt-1 w-20 rounded border border-border bg-surface-alt py-1 shadow-lg"
                 >
                   <button
-                    class="w-full bg-transparent px-2 py-1 text-left text-[12px] text-red-400 hover:bg-red-400/10"
+                    class="w-full border-0 bg-transparent px-2 py-1 text-left text-[12px] text-red-400 shadow-none outline-none hover:bg-red-400/10"
                     onclick={() => void remove()}
                   >
                     删除
@@ -242,6 +274,10 @@ export default function TaskCard(props: TaskCardProps) {
                 </div>
               </Show>
             </div>
+            </div>
+            <span class="text-[12px] leading-4 text-text-dim" title="最后编辑时间">
+              {formatEditedAt(props.task.editedAt)}
+            </span>
           </div>
         </div>
       </div>
