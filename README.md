@@ -2,7 +2,7 @@
 
 轻量 Windows 桌面开发工具箱 —— 随叫随到的快捷键面板：秒级启动、极低内存、无边框界面、插件式扩展。
 
-基于 **Tauri 2 + SolidJS + TypeScript + Rust**，当前版本 **0.3.1**。
+基于 **Tauri 2 + SolidJS + TypeScript + Rust**，当前版本 **0.4.0**。
 
 ## 功能一览
 
@@ -29,7 +29,7 @@
 - 排序：紧急 > 进行中 > 其余，同层按编辑时间倒序；分类按其中最新编辑时间倒序
 - 完成后自动收进该分类的「完成」折叠栏，仍可调整状态
 - 任务内容与备注均支持 Markdown 渲染（链接用系统浏览器打开）
-- 双击内容就地编辑、备注就地编辑、`⋯` 菜单删除（二次确认）
+- 双击内容就地编辑、备注就地编辑、`⋯` 菜单删除（二次确认）、移动到其他分类
 
 ### 窗口与系统集成
 
@@ -37,6 +37,7 @@
 - 全局快捷键 `Ctrl + Alt + D`：显示 / 最小化切换
 - 开机自启开关、「关于」弹窗（展示应用与 Tauri 版本）
 - 标签页切换时各面板保持挂载，输入与输出不丢失
+- 标签栏等宽多行；按住 Alt 显示 1~9 并可切换；长按标签 2 秒进入拖动排序，点击别处提交，顺序保存在本地
 
 ### 插件系统
 
@@ -72,7 +73,7 @@ pnpm build          # 前端生产构建
 pnpm tauri build    # 打 Windows 安装包（release）
 ```
 
-当前测试规模：前端 43 项、Rust 28 项，提交前建议依次执行 `pnpm check && pnpm test && pnpm build`。
+当前测试规模：前端 73 项、Rust 28 项，提交前建议依次执行 `pnpm check && pnpm test && pnpm build`。
 
 ## 打包与产物
 
@@ -80,11 +81,11 @@ pnpm tauri build    # 打 Windows 安装包（release）
 pnpm tauri build
 ```
 
-产物位置（以 0.3.1 为例）：
+产物位置（以 0.4.0 为例）：
 
 - `src-tauri/target/release/dev-tool.exe`
-- `src-tauri/target/release/bundle/nsis/DevTool_0.3.1_x64-setup.exe`（推荐分发）
-- `src-tauri/target/release/bundle/msi/DevTool_0.3.1_x64_en-US.msi`
+- `src-tauri/target/release/bundle/nsis/DevTool_0.4.0_x64-setup.exe`（推荐分发）
+- `src-tauri/target/release/bundle/msi/DevTool_0.4.0_x64_en-US.msi`
 
 > 编译前请先退出正在运行的 DevTool，否则 release 目录中的 `dev-tool.exe` 被占用会导致构建失败（`os error 5`）。
 

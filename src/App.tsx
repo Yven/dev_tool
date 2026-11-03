@@ -1,10 +1,11 @@
-import { createSignal, JSX, Show, onCleanup, onMount } from 'solid-js';
+import { createMemo, createSignal, JSX, Show, onCleanup, onMount } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { getVersion, getTauriVersion } from '@tauri-apps/api/app';
 import { isEnabled, enable, disable } from '@tauri-apps/plugin-autostart';
-import TabBar from './components/TabBar';
+import TabBar, { type Tab } from './components/TabBar';
+import { dropTabId, loadTabOrder, mergeTabOrder, sameIds, saveTabOrder } from './components/tabOrder';
 import TimestampPanel from './modules/timestamp/TimestampPanel';
 import EncodingPanel from './modules/encoding/EncodingPanel';
 import Base64Panel from './modules/base64/Base64Panel';
@@ -39,11 +40,31 @@ interface PluginTab {
 export default function App(): JSX.Element {
   const [activeTab, setActiveTab] = createSignal('timestamp');
   const [pluginTabs, setPluginTabs] = createSignal<PluginTab[]>([]);
+  const [order, setOrder] = createSignal<string[]>(loadTabOrder());
+  const [tabSorting, setTabSorting] = createSignal(false);
+
+  const allTabs = () => [...BUILTIN_TABS, ...pluginTabs()];
+  const orderedTabs = createMemo<Tab[]>(() => {
+    const byId = new Map<string, Tab>();
+    for (const tab of allTabs()) byId.set(tab.id, tab);
+    const out: Tab[] = [];
+    for (const id of mergeTabOrder(order(), allTabs().map((tab) => tab.id))) {
+      const tab = byId.get(id);
+      if (tab) out.push(tab);
+    }
+    return out;
+  });
+  const commitOrder = (ids: string[]) => {
+    if (sameIds(order(), ids)) return;
+    setOrder(ids);
+    saveTabOrder(ids);
+  };
   const [showAbout, setShowAbout] = createSignal(false);
   const [appVersion, setAppVersion] = createSignal('unknown');
   const [tauriVersion, setTauriVersion] = createSignal('unknown');
   const [alwaysOnTop, setAlwaysOnTop] = createSignal(false);
   const [autostart, setAutostart] = createSignal(false);
+  const [altHeld, setAltHeld] = createSignal(false);
 
   onMount(async () => {
     try {
@@ -69,7 +90,13 @@ export default function App(): JSX.Element {
 
     const unlistenUnloaded = await listen('plugin-unloaded', (event) => {
       const plugin = event.payload as { id: string };
-      setPluginTabs((prev) => prev.filter((t) => t.id !== `plugin:${plugin.id}`));
+      const tabId = `plugin:${plugin.id}`;
+      setPluginTabs((prev) => prev.filter((t) => t.id !== tabId));
+      const next = dropTabId(order(), tabId);
+      if (next.length !== order().length) {
+        setOrder(next);
+        saveTabOrder(next);
+      }
     });
 
     const unlistenShowAbout = await listen('show-about', () => {
@@ -77,9 +104,25 @@ export default function App(): JSX.Element {
     });
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') {
+        setAltHeld(true);
+        return;
+      }
+      if (tabSorting()) {
+        if (e.ctrlKey && e.key === 'Tab') e.preventDefault();
+        return;
+      }
+      const tabs = orderedTabs();
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && /^[1-9]$/.test(e.key)) {
+        const tab = tabs[Number(e.key) - 1];
+        if (tab) {
+          e.preventDefault();
+          setActiveTab(tab.id);
+        }
+        return;
+      }
       if (e.ctrlKey && e.key === 'Tab') {
         e.preventDefault();
-        const tabs = [...BUILTIN_TABS, ...pluginTabs()];
         const idx = tabs.findIndex((t) => t.id === activeTab());
         const next = e.shiftKey
           ? (idx - 1 + tabs.length) % tabs.length
@@ -87,13 +130,23 @@ export default function App(): JSX.Element {
         setActiveTab(tabs[next].id);
       }
     };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') setAltHeld(false);
+    };
+    const clearAlt = () => setAltHeld(false);
     document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', clearAlt);
+    document.addEventListener('visibilitychange', clearAlt);
 
     onCleanup(() => {
       unlistenLoaded();
       unlistenUnloaded();
       unlistenShowAbout();
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', clearAlt);
+      document.removeEventListener('visibilitychange', clearAlt);
     });
   });
 
@@ -190,7 +243,14 @@ export default function App(): JSX.Element {
       </div>
 
       {/* 标签栏 */}
-      <TabBar tabs={[...BUILTIN_TABS, ...pluginTabs()]} active={activeTab()} onSelect={setActiveTab} />
+      <TabBar
+        tabs={orderedTabs()}
+        active={activeTab()}
+        onSelect={setActiveTab}
+        altHeld={altHeld()}
+        onCommitOrder={commitOrder}
+        onSortingChange={setTabSorting}
+      />
 
       {/* 面板区域：保持挂载，切换时保留状态/输出 */}
       <div class="flex-1 overflow-auto p-3">

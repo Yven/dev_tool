@@ -1,20 +1,25 @@
 import { For, Show, createSignal, onCleanup, onMount } from 'solid-js';
+import { Portal } from 'solid-js/web';
 import { STATUS_META, STATUS_ORDER, type Task, type TaskStatus } from './model';
 import { confirmTaskDelete } from './storage';
 import { renderMarkdown } from './markdown';
 
 export interface TaskCardProps {
   task: Task;
+  categories: string[];
   onStatus: (id: string, status: TaskStatus) => void;
   onUrgent: (id: string) => void;
   onContent: (id: string, content: string) => void;
   onNote: (id: string, note: string) => void;
   onDelete: (id: string) => void;
+  onMove: (id: string, category: string) => void;
 }
 
 export default function TaskCard(props: TaskCardProps) {
   const [statusOpen, setStatusOpen] = createSignal(false);
   const [menuOpen, setMenuOpen] = createSignal(false);
+  const [moveMenu, setMoveMenu] = createSignal<{ left: number; top: number; maxHeight: number } | null>(null);
+  let moveButton: HTMLButtonElement | undefined;
   const [editing, setEditing] = createSignal(false);
   const [draft, setDraft] = createSignal('');
   const [noteEditing, setNoteEditing] = createSignal(false);
@@ -27,11 +32,13 @@ export default function TaskCard(props: TaskCardProps) {
       const target = event.target as HTMLElement | null;
       if (statusOpen() && !target?.closest('[data-task-status]')) setStatusOpen(false);
       if (menuOpen() && !target?.closest('[data-task-menu]')) setMenuOpen(false);
+      if (moveMenu() && !target?.closest('[data-task-menu]')) setMoveMenu(null);
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setStatusOpen(false);
         setMenuOpen(false);
+        setMoveMenu(null);
       }
     };
     document.addEventListener('pointerdown', onPointerDown);
@@ -49,8 +56,28 @@ export default function TaskCard(props: TaskCardProps) {
 
   const remove = async () => {
     setMenuOpen(false);
+    setMoveMenu(null);
     const ok = await confirmTaskDelete('确定删除该任务？删除后不可恢复。');
     if (ok) props.onDelete(props.task.id);
+  };
+
+  const openMoveMenu = () => {
+    if (moveMenu()) {
+      setMoveMenu(null);
+      return;
+    }
+    const rect = moveButton?.getBoundingClientRect();
+    if (!rect) return;
+    const left = Math.max(8, rect.left - 132);
+    const top = Math.min(Math.max(8, rect.top), window.innerHeight - 8 - 96);
+    const maxHeight = Math.min(200, window.innerHeight - top - 8);
+    setMoveMenu({ left, top, maxHeight });
+  };
+
+  const chooseCategory = (category: string) => {
+    setMoveMenu(null);
+    setMenuOpen(false);
+    props.onMove(props.task.id, category);
   };
 
   const grow = (el: HTMLTextAreaElement) => {
@@ -255,6 +282,7 @@ export default function TaskCard(props: TaskCardProps) {
                 aria-label="更多操作"
                 onclick={() => {
                   setStatusOpen(false);
+                  setMoveMenu(null);
                   setMenuOpen(!menuOpen());
                 }}
               >
@@ -266,12 +294,66 @@ export default function TaskCard(props: TaskCardProps) {
                   class="absolute right-0 top-full z-20 mt-1 w-20 rounded border border-border bg-surface-alt py-1 shadow-lg"
                 >
                   <button
+                    ref={(el) => (moveButton = el)}
+                    class="w-full border-0 bg-transparent px-2 py-1 text-left text-[12px] text-text-dim shadow-none outline-none hover:bg-white/10 hover:text-text"
+                    onclick={openMoveMenu}
+                  >
+                    移动
+                  </button>
+                  <button
                     class="w-full border-0 bg-transparent px-2 py-1 text-left text-[12px] text-red-400 shadow-none outline-none hover:bg-red-400/10"
                     onclick={() => void remove()}
                   >
                     删除
                   </button>
                 </div>
+                <Show when={moveMenu()}>
+                  {(menu) => (
+                    <Portal>
+                      <div
+                        data-task-menu
+                        data-move-menu
+                        class="fixed z-30 rounded border border-border bg-surface-alt py-1 shadow-lg"
+                        style={{
+                          left: `${menu().left}px`,
+                          top: `${menu().top}px`,
+                          width: '128px',
+                          'max-height': `${menu().maxHeight}px`,
+                          overflow: 'auto',
+                        }}
+                      >
+                        <Show
+                          when={props.categories.some((name) => name !== props.task.category)}
+                          fallback={
+                            <div class="px-2 py-1 text-[12px] text-text-dim">暂无其他分类</div>
+                          }
+                        >
+                          <For each={props.categories}>
+                            {(name) => (
+                              <button
+                                class="flex w-full items-center justify-between border-0 bg-transparent px-2 py-1 text-left text-[12px] shadow-none outline-none"
+                                classList={{
+                                  'cursor-default text-text-dim opacity-50':
+                                    name === props.task.category,
+                                  'text-text hover:bg-white/10': name !== props.task.category,
+                                }}
+                                disabled={name === props.task.category}
+                                onclick={() => {
+                                  if (name !== props.task.category) chooseCategory(name);
+                                }}
+                              >
+                                <span class="truncate">{name}</span>
+                                {name === props.task.category && (
+                                  <span class="ml-1 shrink-0 text-[10px]">当前</span>
+                                )}
+                              </button>
+                            )}
+                          </For>
+                        </Show>
+                      </div>
+                    </Portal>
+                  )}
+                </Show>
               </Show>
             </div>
             </div>
