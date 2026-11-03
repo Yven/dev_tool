@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addTask,
   groupAndSort,
+  moveTask,
   parseTaskInput,
   parseTasksFile,
   removeTask,
@@ -149,5 +150,27 @@ describe('文件解析', () => {
 
   it('serializeTasks 输出 version 1 与 tasks', () => {
     expect(JSON.parse(serializeTasks([]))).toEqual({ version: 1, tasks: [] });
+  });
+});
+
+describe('moveTask', () => {
+  it('改分类并刷新 editedAt，其余字段保留', () => {
+    const tasks = [t({ id: '1', category: 'A', status: 'doing', urgent: true, note: 'n', editedAt: 5, createdAt: 1 })];
+    const out = moveTask(tasks, '1', 'B', 100);
+    expect(out[0]).toMatchObject({
+      id: '1', category: 'B', status: 'doing', urgent: true, note: 'n', editedAt: 100, createdAt: 1,
+    });
+  });
+
+  it('同分类、空分类、未知 id 都不改', () => {
+    const base = [t({ id: '1', category: 'A', editedAt: 5 })];
+    expect(moveTask(base, '1', 'A', 100)[0].editedAt).toBe(5);
+    expect(moveTask(base, '1', '   ', 100)[0].editedAt).toBe(5);
+    expect(moveTask(base, 'nope', 'B', 100)[0].category).toBe('A');
+  });
+
+  it('移走最后一条任务后原分类消失', () => {
+    const out = moveTask([t({ id: '1', category: 'A' }), t({ id: '2', category: 'B' })], '1', 'B', 100);
+    expect(groupAndSort(out).map((g) => g.name)).toEqual(['B']);
   });
 });

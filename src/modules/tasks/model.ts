@@ -171,6 +171,19 @@ export function updateNote(tasks: Task[], id: string, note: string): Task[] {
   return mapTask(tasks, id, (task) => ({ ...task, note }));
 }
 
+export function moveTask(
+  tasks: Task[],
+  id: string,
+  category: string,
+  now: number = Date.now(),
+): Task[] {
+  const target = category.trim();
+  if (!target) return tasks;
+  return mapTask(tasks, id, (task) =>
+    task.category === target ? task : { ...task, category: target, editedAt: now },
+  );
+}
+
 export function removeTask(tasks: Task[], id: string): Task[] {
   return tasks.filter((task) => task.id !== id);
 }

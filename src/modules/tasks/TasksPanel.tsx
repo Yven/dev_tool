@@ -2,6 +2,7 @@ import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount }
 import {
   addTask,
   groupAndSort,
+  moveTask,
   parseTaskInput,
   parseTasksFile,
   removeTask,
@@ -142,6 +143,10 @@ export default function TasksPanel() {
     setTasks(removeTask(tasks(), id));
   };
 
+  const move = (id: string, category: string) => {
+    withReorder(() => setTasks(moveTask(tasks(), id, category)));
+  };
+
   const handleLink = (event: MouseEvent) => {
     const anchor = (event.target as HTMLElement | null)?.closest('a[href]');
     if (!anchor) return;
@@ -206,11 +211,13 @@ export default function TasksPanel() {
                 {(task) => (
                   <TaskCard
                     task={task}
+                    categories={groups().map((group) => group.name)}
                     onStatus={changeStatus}
                     onUrgent={changeUrgent}
                     onContent={changeContent}
                     onNote={changeNote}
                     onDelete={remove}
+                    onMove={move}
                   />
                 )}
               </For>
@@ -228,11 +235,13 @@ export default function TasksPanel() {
                       {(task) => (
                         <TaskCard
                           task={task}
+                          categories={groups().map((group) => group.name)}
                           onStatus={changeStatus}
                           onUrgent={changeUrgent}
                           onContent={changeContent}
                           onNote={changeNote}
                           onDelete={remove}
+                          onMove={move}
                         />
                       )}
                     </For>
