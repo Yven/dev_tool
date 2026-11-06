@@ -71,6 +71,27 @@ describe('groupAndSort', () => {
     expect(groupAndSort(tasks).map((g) => g.name)).toEqual(['Urgent', 'New', 'Old', 'DoneOnly']);
   });
 
+  it('勾选完成不改变分类顺序（已完成任务不参与排序）', () => {
+    const tasks = [
+      t({ id: 'a1', category: 'A', editedAt: 10 }),
+      t({ id: 'a2', category: 'A', editedAt: 10 }),
+      t({ id: 'b1', category: 'B', editedAt: 300 }),
+    ];
+    expect(groupAndSort(tasks).map((g) => g.name)).toEqual(['B', 'A']);
+    const out = setStatus(tasks, 'a2', 'done', 1000);
+    expect(groupAndSort(out).map((g) => g.name)).toEqual(['B', 'A']);
+  });
+
+  it('勾选完成不影响同分类内其它任务的顺序', () => {
+    const tasks = [
+      t({ id: 'a', category: 'A', editedAt: 30 }),
+      t({ id: 'b', category: 'A', editedAt: 20 }),
+      t({ id: 'c', category: 'A', editedAt: 10 }),
+    ];
+    const out = setStatus(tasks, 'b', 'done', 1000);
+    expect(groupAndSort(out)[0].tasks.map((x) => x.id)).toEqual(['a', 'c']);
+  });
+
   it('任务层内 editedAt 倒序，同值按 createdAt 倒序', () => {
     const tasks = [
       t({ id: 'b', category: 'A', editedAt: 10, createdAt: 1 }),

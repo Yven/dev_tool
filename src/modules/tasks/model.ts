@@ -117,7 +117,8 @@ export function groupAndSort(tasks: Task[]): CategoryGroup[] {
     });
   }
 
-  const latest = (group: CategoryGroup) => latestEdited([...group.tasks, ...group.completed]);
+  // 分类排序只看未完成任务的最新编辑时间：勾选完成/取消完成不改变分类顺序
+  const latest = (group: CategoryGroup) => latestEdited(group.tasks);
 
   return groups.sort(
     (a, b) =>

@@ -2,7 +2,7 @@
 
 轻量 Windows 桌面开发工具箱 —— 随叫随到的快捷键面板：秒级启动、极低内存、无边框界面、插件式扩展。
 
-基于 **Tauri 2 + SolidJS + TypeScript + Rust**，当前版本 **0.4.0**。
+基于 **Tauri 2 + SolidJS + TypeScript + Rust**，当前版本 **0.4.1**。
 
 ## 功能一览
 
@@ -81,11 +81,11 @@ pnpm tauri build    # 打 Windows 安装包（release）
 pnpm tauri build
 ```
 
-产物位置（以 0.4.0 为例）：
+产物位置（以 0.4.1 为例）：
 
 - `src-tauri/target/release/dev-tool.exe`
-- `src-tauri/target/release/bundle/nsis/DevTool_0.4.0_x64-setup.exe`（推荐分发）
-- `src-tauri/target/release/bundle/msi/DevTool_0.4.0_x64_en-US.msi`
+- `src-tauri/target/release/bundle/nsis/DevTool_0.4.1_x64-setup.exe`（推荐分发）
+- `src-tauri/target/release/bundle/msi/DevTool_0.4.1_x64_en-US.msi`
 
 > 编译前请先退出正在运行的 DevTool，否则 release 目录中的 `dev-tool.exe` 被占用会导致构建失败（`os error 5`）。
 
