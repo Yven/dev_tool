@@ -2,7 +2,7 @@
 
 轻量 Windows 桌面开发工具箱 —— 随叫随到的快捷键面板：秒级启动、极低内存、无边框界面、插件式扩展。
 
-基于 **Tauri 2 + SolidJS + TypeScript + Rust**，当前版本 **0.4.0**。
+基于 **Tauri 2 + SolidJS + TypeScript + Rust**，当前版本 **0.4.1**。
 
 ## 功能一览
 
@@ -81,15 +81,39 @@ pnpm tauri build    # 打 Windows 安装包（release）
 pnpm tauri build
 ```
 
-产物位置（以 0.4.0 为例）：
+产物位置（以 0.4.1 为例）：
 
 - `src-tauri/target/release/dev-tool.exe`
-- `src-tauri/target/release/bundle/nsis/DevTool_0.4.0_x64-setup.exe`（推荐分发）
-- `src-tauri/target/release/bundle/msi/DevTool_0.4.0_x64_en-US.msi`
+- `src-tauri/target/release/bundle/nsis/DevTool_0.4.1_x64-setup.exe`（推荐分发）
+- `src-tauri/target/release/bundle/msi/DevTool_0.4.1_x64_en-US.msi`
 
 > 编译前请先退出正在运行的 DevTool，否则 release 目录中的 `dev-tool.exe` 被占用会导致构建失败（`os error 5`）。
 
 版本号需同步修改四处：`package.json`、`src-tauri/Cargo.toml`、`src-tauri/tauri.conf.json`、`src-tauri/Cargo.lock`（`dev-tool` 条目）；「关于」弹窗通过 `getVersion()` 运行时读取，无需另改。
+
+## 自动更新与发版
+
+应用通过 `tauri-plugin-updater` 从 GitHub Releases 检查更新，更新包使用 Tauri 签名校验：
+
+- 启动 5 秒后静默检查一次；发现新版本时标题栏 `?` 按钮显示红点，并弹出提示
+- 「关于」弹窗内可手动检查、查看更新说明、下载并安装；Windows 安装时应用会自动退出并由安装器接管
+- 更新源：`https://github.com/Yven/dev_tool/releases/latest/download/latest.json`
+
+### 发布新版本
+
+1. 同步版本号（见上节四处），提交代码
+2. 打 tag 并推送：`git tag v0.5.0`、`git push origin v0.5.0`
+3. GitHub Actions 会构建 NSIS/MSI 安装包、签名并创建 Release，同时上传 `latest.json`
+
+首次发布前需在仓库 `Settings → Secrets and variables → Actions` 配置：
+
+| Secret | 值 |
+|---|---|
+| `TAURI_SIGNING_PRIVATE_KEY` | `%USERPROFILE%\.tauri\devtool-update.key` 的文件内容 |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | 私钥密码（生成时未设密码则留空/不配置） |
+
+> 私钥同时用于签名，一旦丢失，已安装的客户端将无法再接收更新，请务必备份。
+> 本地 `pnpm tauri build` 不生成更新包；CI 通过 `--config src-tauri/tauri.release.conf.json` 启用 `createUpdaterArtifacts`。
 
 ## 数据存储
 

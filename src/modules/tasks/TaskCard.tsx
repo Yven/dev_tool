@@ -1,4 +1,4 @@
-import { For, Show, createSignal, onCleanup, onMount } from 'solid-js';
+import { For, Show, createEffect, createSignal, onCleanup, onMount } from 'solid-js';
 import { Portal } from 'solid-js/web';
 import { STATUS_META, STATUS_ORDER, type Task, type TaskStatus } from './model';
 import { confirmTaskDelete } from './storage';
@@ -15,17 +15,33 @@ export interface TaskCardProps {
   onMove: (id: string, category: string) => void;
 }
 
+// 同一时间只允许一张卡片的弹出层处于展开状态
+const [openCardId, setOpenCardId] = createSignal<string | null>(null);
+
 export default function TaskCard(props: TaskCardProps) {
   const [statusOpen, setStatusOpen] = createSignal(false);
   const [menuOpen, setMenuOpen] = createSignal(false);
+  const [menuPos, setMenuPos] = createSignal({ left: 0, top: 0 });
+  const [statusPos, setStatusPos] = createSignal<{ right: number; top: number; maxWidth: number } | null>(null);
   const [moveMenu, setMoveMenu] = createSignal<{ left: number; top: number; maxHeight: number } | null>(null);
+  let menuButton: HTMLButtonElement | undefined;
   let moveButton: HTMLButtonElement | undefined;
+  let statusButton: HTMLButtonElement | undefined;
   const [editing, setEditing] = createSignal(false);
   const [draft, setDraft] = createSignal('');
   const [noteEditing, setNoteEditing] = createSignal(false);
   const [noteDraft, setNoteDraft] = createSignal('');
 
   const meta = () => STATUS_META[props.task.status];
+
+  createEffect(() => {
+    const owner = openCardId();
+    if (owner !== null && owner !== props.task.id) {
+      setStatusOpen(false);
+      setMenuOpen(false);
+      setMoveMenu(null);
+    }
+  });
 
   onMount(() => {
     const onPointerDown = (event: PointerEvent) => {
@@ -43,9 +59,13 @@ export default function TaskCard(props: TaskCardProps) {
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
+    window.addEventListener('scroll', syncFloating, true);
+    window.addEventListener('resize', syncFloating);
     onCleanup(() => {
       document.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('scroll', syncFloating, true);
+      window.removeEventListener('resize', syncFloating);
     });
   });
 
@@ -61,6 +81,84 @@ export default function TaskCard(props: TaskCardProps) {
     if (ok) props.onDelete(props.task.id);
   };
 
+  const placeStatus = (rect: DOMRect) => {
+    setStatusPos({
+      right: window.innerWidth - rect.left + 4,
+      top: Math.max(8, rect.top),
+      maxWidth: Math.max(140, rect.left - 8),
+    });
+  };
+
+  const placeMenu = (rect: DOMRect) => {
+    const width = 80;
+    const height = 64;
+    setMenuPos({
+      left: Math.max(8, Math.min(rect.right - width, window.innerWidth - 8 - width)),
+      top: rect.bottom + 4 + height > window.innerHeight - 8
+        ? Math.max(8, rect.top - 4 - height)
+        : rect.bottom + 4,
+    });
+  };
+
+  const placeMoveMenu = (rect: DOMRect) => {
+    const left = Math.max(8, rect.left - 132);
+    const top = Math.min(Math.max(8, rect.top), window.innerHeight - 8 - 96);
+    setMoveMenu({ left, top, maxHeight: Math.min(200, window.innerHeight - top - 8) });
+  };
+
+  const visibleRect = (el: HTMLElement | undefined) => {
+    const rect = el?.getBoundingClientRect();
+    if (!rect || rect.bottom < 0 || rect.top > window.innerHeight) return null;
+    return rect;
+  };
+
+  // 浮层用 fixed 定位，滚动或窗口尺寸变化时跟着锚点按钮走；锚点滚出视口就收起
+  const syncFloating = () => {
+    if (statusOpen()) {
+      const rect = visibleRect(statusButton);
+      if (rect) placeStatus(rect);
+      else setStatusOpen(false);
+    }
+    if (menuOpen()) {
+      const rect = visibleRect(menuButton);
+      if (rect) placeMenu(rect);
+      else setMenuOpen(false);
+    }
+    if (moveMenu()) {
+      const rect = visibleRect(moveButton);
+      if (rect) placeMoveMenu(rect);
+      else setMoveMenu(null);
+    }
+  };
+
+  const toggleStatus = () => {
+    if (statusOpen()) {
+      setStatusOpen(false);
+      return;
+    }
+    const rect = statusButton?.getBoundingClientRect();
+    if (!rect) return;
+    setMenuOpen(false);
+    setMoveMenu(null);
+    placeStatus(rect);
+    setStatusOpen(true);
+    setOpenCardId(props.task.id);
+  };
+
+  const toggleMenu = () => {
+    if (menuOpen()) {
+      setMenuOpen(false);
+      return;
+    }
+    const rect = menuButton?.getBoundingClientRect();
+    if (!rect) return;
+    setStatusOpen(false);
+    setMoveMenu(null);
+    placeMenu(rect);
+    setOpenCardId(props.task.id);
+    setMenuOpen(true);
+  };
+
   const openMoveMenu = () => {
     if (moveMenu()) {
       setMoveMenu(null);
@@ -68,10 +166,7 @@ export default function TaskCard(props: TaskCardProps) {
     }
     const rect = moveButton?.getBoundingClientRect();
     if (!rect) return;
-    const left = Math.max(8, rect.left - 132);
-    const top = Math.min(Math.max(8, rect.top), window.innerHeight - 8 - 96);
-    const maxHeight = Math.min(200, window.innerHeight - top - 8);
-    setMoveMenu({ left, top, maxHeight });
+    placeMoveMenu(rect);
   };
 
   const chooseCategory = (category: string) => {
@@ -231,129 +326,136 @@ export default function TaskCard(props: TaskCardProps) {
 
           <div class="flex shrink-0 flex-col items-end gap-1">
             <div class="flex items-center gap-1">
-              <Show
-                when={statusOpen()}
-              fallback={
-                <button
-                  data-task-status
-                  class="flex h-[22px] items-center gap-1 rounded border px-2 text-[12px] transition-colors"
-                  style={{
-                    background: meta().bg,
-                    'border-color': meta().border,
-                    color: meta().dot,
-                  }}
-                  onclick={() => {
-                    setMenuOpen(false);
-                    setStatusOpen(true);
-                  }}
-                >
-                  <span class="h-1.5 w-1.5 rounded-full" style={{ background: meta().dot }} />
-                  {meta().label}
-                </button>
-              }
-            >
-              <div data-task-status class="task-status-pop flex items-center gap-1">
-                <For each={STATUS_ORDER}>
-                  {(status) => (
-                    <button
-                      class="flex h-[22px] items-center gap-1 rounded border px-2 text-[12px] transition-colors"
-                      style={{
-                        background: STATUS_META[status].bg,
-                        'border-color': STATUS_META[status].border,
-                        color: STATUS_META[status].dot,
-                      }}
-                      onclick={() => pickStatus(status)}
-                    >
-                      <span
-                        class="h-1.5 w-1.5 rounded-full"
-                        style={{ background: STATUS_META[status].dot }}
-                      />
-                      {STATUS_META[status].label}
-                    </button>
-                  )}
-                </For>
-              </div>
-            </Show>
+              <button
+                ref={(el) => (statusButton = el)}
+                data-task-status
+                class="flex h-[22px] items-center gap-1 rounded border px-2 text-[12px] transition-colors"
+                style={{
+                  background: meta().bg,
+                  'border-color': meta().border,
+                  color: meta().dot,
+                }}
+                onclick={toggleStatus}
+              >
+                <span class="h-1.5 w-1.5 rounded-full" style={{ background: meta().dot }} />
+                {meta().label}
+              </button>
+              <Show when={statusOpen()}>
+                <Portal>
+                  <div
+                    data-task-status
+                    class="task-status-pop fixed z-30 flex w-max flex-wrap items-center gap-1 rounded bg-surface-alt px-1 shadow-lg"
+                    style={{
+                      right: `${statusPos()?.right ?? 0}px`,
+                      top: `${statusPos()?.top ?? 0}px`,
+                      'max-width': `${statusPos()?.maxWidth ?? 140}px`,
+                    }}
+                  >
+                    <For each={STATUS_ORDER}>
+                      {(status) => (
+                        <button
+                          class="flex h-[22px] items-center gap-1 whitespace-nowrap rounded border px-2 text-[12px] transition-colors"
+                          style={{
+                            background: STATUS_META[status].bg,
+                            'border-color': STATUS_META[status].border,
+                            color: STATUS_META[status].dot,
+                          }}
+                          onclick={() => pickStatus(status)}
+                        >
+                          <span
+                            class="h-1.5 w-1.5 rounded-full"
+                            style={{ background: STATUS_META[status].dot }}
+                          />
+                          {STATUS_META[status].label}
+                        </button>
+                      )}
+                    </For>
+                  </div>
+                </Portal>
+              </Show>
 
             <div class="relative">
               <button
+                ref={(el) => (menuButton = el)}
                 data-task-menu
                 class="flex h-[22px] items-center rounded border border-border bg-transparent px-2 text-[12px] text-text-dim hover:text-text"
                 aria-label="更多操作"
-                onclick={() => {
-                  setStatusOpen(false);
-                  setMoveMenu(null);
-                  setMenuOpen(!menuOpen());
-                }}
+                onclick={toggleMenu}
               >
                 <span class="text-[14px] leading-none">⋯</span>
               </button>
               <Show when={menuOpen()}>
-                <div
-                  data-task-menu
-                  class="absolute right-0 top-full z-20 mt-1 w-20 rounded border border-border bg-surface-alt py-1 shadow-lg"
-                >
-                  <button
-                    ref={(el) => (moveButton = el)}
-                    class="w-full border-0 bg-transparent px-2 py-1 text-left text-[12px] text-text-dim shadow-none outline-none hover:bg-white/10 hover:text-text"
-                    onclick={openMoveMenu}
+                <Portal>
+                  <div
+                    data-task-menu
+                    class="fixed z-30 w-20 rounded border border-border bg-surface-alt py-1 shadow-lg"
+                    style={{
+                      left: `${menuPos().left}px`,
+                      top: `${menuPos().top}px`,
+                    }}
                   >
-                    移动
-                  </button>
-                  <button
-                    class="w-full border-0 bg-transparent px-2 py-1 text-left text-[12px] text-red-400 shadow-none outline-none hover:bg-red-400/10"
-                    onclick={() => void remove()}
-                  >
-                    删除
-                  </button>
-                </div>
-                <Show when={moveMenu()}>
-                  {(menu) => (
-                    <Portal>
-                      <div
-                        data-task-menu
-                        data-move-menu
-                        class="fixed z-30 rounded border border-border bg-surface-alt py-1 shadow-lg"
-                        style={{
-                          left: `${menu().left}px`,
-                          top: `${menu().top}px`,
-                          width: '128px',
-                          'max-height': `${menu().maxHeight}px`,
-                          overflow: 'auto',
-                        }}
-                      >
-                        <Show
-                          when={props.categories.some((name) => name !== props.task.category)}
-                          fallback={
-                            <div class="px-2 py-1 text-[12px] text-text-dim">暂无其他分类</div>
-                          }
+                    <button
+                      ref={(el) => (moveButton = el)}
+                      class="w-full border-0 bg-transparent px-2 py-1 text-left text-[12px] text-text-dim shadow-none outline-none hover:bg-white/10 hover:text-text"
+                      onclick={openMoveMenu}
+                    >
+                      移动
+                    </button>
+                    <button
+                      class="w-full border-0 bg-transparent px-2 py-1 text-left text-[12px] text-red-400 shadow-none outline-none hover:bg-red-400/10"
+                      onclick={() => void remove()}
+                    >
+                      删除
+                    </button>
+                  </div>
+                  <Show when={moveMenu()}>
+                    {(menu) => (
+                      <Portal>
+                        <div
+                          data-task-menu
+                          data-move-menu
+                          class="fixed z-30 rounded border border-border bg-surface-alt py-1 shadow-lg"
+                          style={{
+                            left: `${menu().left}px`,
+                            top: `${menu().top}px`,
+                            width: '128px',
+                            'max-height': `${menu().maxHeight}px`,
+                            overflow: 'auto',
+                          }}
                         >
-                          <For each={props.categories}>
-                            {(name) => (
-                              <button
-                                class="flex w-full items-center justify-between border-0 bg-transparent px-2 py-1 text-left text-[12px] shadow-none outline-none"
-                                classList={{
-                                  'cursor-default text-text-dim opacity-50':
-                                    name === props.task.category,
-                                  'text-text hover:bg-white/10': name !== props.task.category,
-                                }}
-                                disabled={name === props.task.category}
-                                onclick={() => {
-                                  if (name !== props.task.category) chooseCategory(name);
-                                }}
-                              >
-                                <span class="truncate">{name}</span>
-                                {name === props.task.category && (
-                                  <span class="ml-1 shrink-0 text-[10px]">当前</span>
-                                )}
-                              </button>
-                            )}
-                          </For>
-                        </Show>
-                      </div>
-                    </Portal>
-                  )}
-                </Show>
+                          <Show
+                            when={props.categories.some((name) => name !== props.task.category)}
+                            fallback={
+                              <div class="px-2 py-1 text-[12px] text-text-dim">暂无其他分类</div>
+                            }
+                          >
+                            <For each={props.categories}>
+                              {(name) => (
+                                <button
+                                  class="flex w-full items-center justify-between border-0 bg-transparent px-2 py-1 text-left text-[12px] shadow-none outline-none"
+                                  classList={{
+                                    'cursor-default text-text-dim opacity-50':
+                                      name === props.task.category,
+                                    'text-text hover:bg-white/10': name !== props.task.category,
+                                  }}
+                                  disabled={name === props.task.category}
+                                  onclick={() => {
+                                    if (name !== props.task.category) chooseCategory(name);
+                                  }}
+                                >
+                                  <span class="truncate">{name}</span>
+                                  {name === props.task.category && (
+                                    <span class="ml-1 shrink-0 text-[10px]">当前</span>
+                                  )}
+                                </button>
+                              )}
+                            </For>
+                          </Show>
+                        </div>
+                      </Portal>
+                    )}
+                  </Show>
+                </Portal>
               </Show>
             </div>
             </div>

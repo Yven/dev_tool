@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "DevTool",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "identifier": "com.devtool.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -49,6 +49,17 @@
       },
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/Yven/dev_tool/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDYwQ0U4RDVGRDBBMTkwNjYKUldSbWtLSFFYNDNPWUJUUVJRZUkzUmdoTDI0YUtTbXRYVGR6SC9leVMvRXlvbm1LaEJVQ3lrVWIK",
+      "windows": {
+        "installMode": "passive"
       }
     }
   }
