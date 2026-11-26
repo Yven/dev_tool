@@ -17,6 +17,8 @@ import NotesPanel from './modules/notes/NotesPanel';
 import TasksPanel from './modules/tasks/TasksPanel';
 import PluginSlot from './plugin/PluginSlot';
 import Toast from './components/Toast';
+import UpdatePanel from './components/UpdatePanel';
+import { checkForUpdate, updateAvailable } from './updater';
 import './app.css';
 
 const BUILTIN_TABS = [
@@ -65,6 +67,7 @@ export default function App(): JSX.Element {
   const [alwaysOnTop, setAlwaysOnTop] = createSignal(false);
   const [autostart, setAutostart] = createSignal(false);
   const [altHeld, setAltHeld] = createSignal(false);
+  let updateTimer: ReturnType<typeof setTimeout> | undefined;
 
   onMount(async () => {
     try {
@@ -76,6 +79,11 @@ export default function App(): JSX.Element {
       setAutostart(await isEnabled());
     } catch (e) {
       console.error('Load version failed:', e);
+    }
+
+    // 生产构建启动后静默检查一次更新
+    if (import.meta.env.PROD) {
+      updateTimer = setTimeout(() => void checkForUpdate(true), 5000);
     }
 
     // 监听插件加载事件
@@ -140,6 +148,7 @@ export default function App(): JSX.Element {
     document.addEventListener('visibilitychange', clearAlt);
 
     onCleanup(() => {
+      if (updateTimer) clearTimeout(updateTimer);
       unlistenLoaded();
       unlistenUnloaded();
       unlistenShowAbout();
@@ -219,11 +228,14 @@ export default function App(): JSX.Element {
             📌
           </button>
           <button
-            class="w-6 h-6 flex items-center justify-center rounded bg-surface-alt text-text-dim border border-border hover:text-text hover:bg-surface transition-colors"
+            class="relative w-6 h-6 flex items-center justify-center rounded bg-surface-alt text-text-dim border border-border hover:text-text hover:bg-surface transition-colors"
             onclick={() => setShowAbout(true)}
             title="关于"
           >
             ?
+            <Show when={updateAvailable()}>
+              <span class="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+            </Show>
           </button>
           <button
             class="w-6 h-6 flex items-center justify-center rounded bg-surface-alt text-text-dim border border-border hover:text-text hover:bg-surface transition-colors"
@@ -290,7 +302,7 @@ export default function App(): JSX.Element {
 
       <Show when={showAbout()}>
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onclick={() => setShowAbout(false)}>
-          <div class="w-[360px] rounded border border-border bg-surface-alt p-4 text-sm text-text" onclick={(e) => e.stopPropagation()}>
+          <div class="w-[360px] max-h-[85vh] overflow-y-auto rounded border border-border bg-surface-alt p-4 text-sm text-text" onclick={(e) => e.stopPropagation()}>
             <div class="mb-3 text-base font-semibold">关于 DevTool</div>
             <div class="space-y-1 text-xs leading-5">
               <div>当前工具版本：{appVersion()}</div>
@@ -311,6 +323,7 @@ export default function App(): JSX.Element {
                   {autostart() ? '已开启' : '未开启'}
                 </button>
               </div>
+              <UpdatePanel />
             </div>
             <div class="mt-4 flex justify-end">
               <button class="px-3 py-1 text-xs rounded border border-border hover:border-primary" onclick={() => setShowAbout(false)}>

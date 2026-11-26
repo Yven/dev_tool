@@ -28,6 +28,7 @@ pub fn run() {
         .plugin(tauri_plugin_positioner::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         // 自定义 Commands
         .invoke_handler(tauri::generate_handler![
             commands::timestamp::cmd_timestamp_convert,
