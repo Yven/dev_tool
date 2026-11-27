@@ -212,7 +212,8 @@ export default function App(): JSX.Element {
     <div class="h-screen w-screen flex flex-col bg-surface text-text select-none" onContextMenu={(e) => e.preventDefault()}>
       {/* 自定义标题栏 */}
       <div class="h-8 flex items-center bg-surface-alt border-b border-border">
-        <div class="h-full flex-1 flex items-center px-3 cursor-move" onMouseDown={startDragWindow}>
+        <div class="h-full flex-1 flex items-center gap-1.5 px-3 cursor-move" onMouseDown={startDragWindow}>
+          <img src="/icon.png" class="h-4 w-4 shrink-0 rounded-[3px]" alt="" draggable={false} />
           <span class="text-xs text-text-dim">DevTool</span>
         </div>
         <div class="pr-2 flex gap-1">
